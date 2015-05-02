@@ -6,11 +6,11 @@ from mayavi import mlab
 from sklearn.utils.arpack import eigsh
 from sklearn.cluster import KMeans
 
-
 '''
 functions
 -----------
 see also: https://github.com/margulies/topography/blob/master/utils_py/embedding.py
+and: https://github.com/juhuntenburg/brainsurfacescripts
 '''
 
 def read_vtk(file):
@@ -122,6 +122,46 @@ def recort(n_vertices, data, cortex, increase):
         count = count +1
     return d
 
+def subcluster(kmeans, triangles, n_vertices):
+    # make a dictionary for kmeans clusters and subclusters
+    clust_subclust={}
+    # loop through all kmeans clusters (and the mask cluster with value zero)
+    for c in range(int(kmeans.max()+1)):
+        # add dic entry
+        clust_subclust['k'+str(c)]=[]
+        # extract all nodes of the cluster
+        clust=list(np.where(kmeans==c)[0])
+        # while not all nodes have been removed from the cluster
+        while len(clust)>0:
+            #start at currently first node in cluster
+            neighbours=[clust[0]]
+            # go through growing list of neighbours in the subcluster
+            for i in neighbours:
+                #find all triangles that contain current
+                for j in range(triangles.shape[0]):
+                    if i in triangles[j]:
+                        # add all nodes of in this triangle to the neighbours list
+                        n=list(triangles[j])
+                        # but only if they aren't already in the list and if they are in clust
+                        [neighbours.append(x) for x in n if x in clust and x not in neighbours]
+                        # remove assigned nodes from the cluster list
+                        [clust.remove(x) for x in n if x in clust]
+            # when no new neighbours can be found, add subcluster to subcluster list 
+            # and start new subcluster from first node in remaining cluster list
+            clust_subclust['k'+str(c)].append(neighbours)
+    
+    # make array with original kmeans clusters and subclusters        
+    subclust_full = np.zeros((n_vertices, int(kmeans.max()+1)))
+    count = 0
+    for c in range(len(clust_subclust.keys())):
+        for i in range(len(clust_subclust['k'+str(c)])):
+            for j in clust_subclust['k'+str(c)][i]:
+                subclust_full[j][c] = i+1
+    subclust_arr=np.hstack((np.reshape(kmeans, (kmeans.shape[0],1)), subclust_full))
+    
+    return subclust_arr
+
+
 
 '''
 running
@@ -141,7 +181,7 @@ for sub in ['BP4T','GAET','HJJT','KSYT', 'OL1T', 'PL6T', 'SC1T', 'WSFT']:
         mask_file='/scr/ilz3/myelinconnect/final_struct_space/medial_wall_mask/%s_%s_mid_simple_0.01.1D.roi'%(sub, hemi)
         embed_file="/scr/ilz3/myelinconnect/final_struct_space/clustering/%s_%s_mid_simple_0.01_rest_%s_smoothdata_embed_%s.csv"%(sub, hemi, hemi, str(n_components_embedding))
         kmeans_file="/scr/ilz3/myelinconnect/final_struct_space/clustering/%s_%s_mid_simple_0.01_rest_%s_smoothdata_embed_%s_kmeans_%s.csv"%(sub, hemi, hemi, str(n_components_embedding), str(n_components_kmeans))
-        
+        subclust_file="/scr/ilz3/myelinconnect/final_struct_space/clustering/%s_%s_mid_simple_0.01_rest_%s_smoothdata_embed_%s_kmeans_%s_subclust.csv"%(sub, hemi, hemi, str(n_components_embedding), str(n_components_kmeans))
         
         print 'reading vtk file'
         v,f,d=read_vtk(func_file)
@@ -170,12 +210,13 @@ for sub in ['BP4T','GAET','HJJT','KSYT', 'OL1T', 'PL6T', 'SC1T', 'WSFT']:
             embedding_recort[:,e]=recort(len(all_vertex), embedding_results[:,e], cortex, 0)
         np.savetxt(embed_file, embedding_recort, delimiter=",")
         
-        
         print 'running kmeans'
         kmeans_results = runKmeans(embedding_results, n_components_kmeans)
         kmeans_recort = recort(len(all_vertex), kmeans_results, cortex, 1)
         np.savetxt(kmeans_file, kmeans_recort, delimiter=",")
         
+        print 'subclustering'
+        subclust_arr=subcluster(kmeans_recort, f['val'], len(v['val']))
+        np.savetxt(subclust_file, subclust_arr, delimiter=",")        
+        
         print 'done'
-
-
