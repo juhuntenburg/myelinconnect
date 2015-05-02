@@ -184,9 +184,10 @@ for sub in ['BP4T','GAET','HJJT','KSYT', 'OL1T', 'PL6T', 'SC1T', 'WSFT']:
         subclust_file="/scr/ilz3/myelinconnect/final_struct_space/clustering/%s_%s_mid_simple_0.01_rest_%s_smoothdata_embed_%s_kmeans_%s_subclust.csv"%(sub, hemi, hemi, str(n_components_embedding), str(n_components_kmeans))
         
         print 'reading vtk file'
-        v,f,d=read_vtk(func_file)
-        func_data=d['val']
-        all_vertex=range(len(v['val']))
+        vert,face,data=read_vtk(func_file)
+        func_data=data['val']
+        n_vertices=len(vert['val'])
+        all_vertex=range(n_vertices)
         
         print 'masking'
         mask=np.loadtxt(mask_file)[:,0]
@@ -216,7 +217,7 @@ for sub in ['BP4T','GAET','HJJT','KSYT', 'OL1T', 'PL6T', 'SC1T', 'WSFT']:
         np.savetxt(kmeans_file, kmeans_recort, delimiter=",")
         
         print 'subclustering'
-        subclust_arr=subcluster(kmeans_recort, f['val'], len(v['val']))
+        subclust_arr=subcluster(kmeans_recort, face['val'], n_vertices)
         np.savetxt(subclust_file, subclust_arr, delimiter=",")        
         
         print 'done'
