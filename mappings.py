@@ -21,23 +21,16 @@ subjects_db=list(df['DB'])
 
 
 # sessions to loop over
-sessions=['rest1_1'] # ,'rest1_2', 'rest2_1', 'rest2_2']
+sessions=['rest1_1' ,'rest1_2', 'rest2_1', 'rest2_2']
 
 # directories
 working_dir = '/scr/ilz3/myelinconnect/working_dir/' 
 data_dir= '/scr/ilz3/myelinconnect/'
-out_dir = '/scr/ilz3/myelinconnect/mappings/'
+out_dir = '/scr/ilz3/myelinconnect/transformations/'
 
 # set fsl output type to nii.gz
 fsl.FSLCommand.set_default_output_type('NIFTI_GZ')
 
-# volumes to remove from each timeseries
-vol_to_remove = 5
-
-# bandpass filter cutoffs in HZ, and TR to calculate sigma
-#TR=3.0
-#highpass=0.01
-#lowpass=0.1
 
 # main workflow
 mappings = Workflow(name='mappings')
@@ -56,12 +49,15 @@ session_infosource.iterables=[('session', sessions)]
 
 # select files
 templates={'median': 'resting/preprocessed/{subject}/{session}/realignment/corr_{subject}_{session}_roi_detrended_median_corrected.nii.gz',
+           'median_mapping' : 'mappings/rest/corr_{subject}_{session}_*mapping.nii.gz',
            't1_mapping': 'mappings/t1/{subject}*T1_Images_merged_mapping.nii.gz',
            't1_highres' : 'struct/t1/{subject}*T1_Images_merged.nii.gz',
-           'median_mapping' : 'mappings/{session}/corr_{subject}_{session}_*mapping.nii.gz',
            'epi2highres_lin_itk' : 'resting/preprocessed/{subject}/{session}/registration/epi2highres_lin.txt',
            'epi2highres_warp':'resting/preprocessed/{subject}/{session}/registration/transform0Warp.nii.gz',
            'epi2highres_invwarp':'resting/preprocessed/{subject}/{session}/registration/transform0InverseWarp.nii.gz',
+           't1_prep_rh' : 'struct/surf_rh/prep_t1/smooth_1.5/{subject}_rh_mid_T1_avg_smoothdata_data.nii.gz',
+           't1_prep_lh' : 'struct/surf_lh/prep_t1/smooth_1.5/{subject}_lh_mid_T1_avg_smoothdata_data.nii.gz',
+           #'t1_prep_lh' : 'struct/surf_lh/prep_t1/smooth_1.5/{subject}_lh_mid_T1_avg_smoothdata_data.nii.gz',
            
            }    
 selectfiles = Node(nio.SelectFiles(templates, base_directory=data_dir),
@@ -107,14 +103,34 @@ mappings.connect([(selectfiles, struct2func, [('t1_mapping', 'input_image'),
                     (translist_inv, struct2func, [('out', 'transforms')]),
                  ])
 
+
+# project T1 images to functional space
+t1_preps = Node(util.Merge(2),name='t1_preps')
+mappings.connect([(selectfiles, t1_preps, [('t1_prep_rh', 'in1')]),
+                 (selectfiles, t1_preps, [('t1_prep_rh', 'in2')])])
+
+t12func = MapNode(ants.ApplyTransforms(invert_transform_flags=[True, False],
+                                        dimension=3,
+                                        interpolation='WelchWindowedSinc'),
+                  iterfield=['input_image'],
+                  name='t12func')
+     
+mappings.connect([(selectfiles, t12func, [('median', 'reference_image')]),
+                  (t1_preps, t12func, [('out', 'input_image')]),
+                  (translist_inv, t12func, [('out', 'transforms')]),
+                 ])
+
   
 # sink relevant files
 sink = Node(nio.DataSink(parameterization=False,
                                base_directory=out_dir),
              name='sink')
 
-mappings.connect([(func2struct, sink, [('output_image', 'rest1_1_to_t1.@func')]),
-                    (struct2func, sink, [('output_image', 't1_to_rest1_1.@anat')])
+mappings.connect([(session_infosource, sink, [('session', 'container')]),
+                  (func2struct, sink, [('output_image', 'func_to_t1_mapping.@func')]),
+                    (struct2func, sink, [('output_image', 't1_to_func_mapping.@anat')]),
+                    (t12func, sink, [('output_image', 't1_in_funcspace.@anat')]),
+                    
                    ])
     
 mappings.run(plugin='MultiProc', plugin_args={'n_procs' : 9})

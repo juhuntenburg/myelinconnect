@@ -24,13 +24,12 @@ subjects_db=list(df['DB'])
 #     subjects.append(subjects_db[sub]+'_'+subjects_trt[sub])
 
 # sessions to loop over
-sessions=['rest1_1'] # ,'rest1_2', 'rest2_1', 'rest2_2']
+sessions=['rest1_1' ,'rest1_2', 'rest2_1', 'rest2_2']
 
 # directories
 working_dir = '/scr/ilz3/myelinconnect/working_dir/' 
 data_dir= '/scr/ilz3/myelinconnect/'
 out_dir = '/scr/ilz3/myelinconnect/resting/preprocessed/'
-final_dir = '/scr/ilz3/myelinconnect/final/'
 freesurfer_dir = '/scr/ilz3/myelinconnect/freesurfer/' # freesurfer reconstruction of lowres is assumed
 
 # set fsl output type to nii.gz
@@ -38,11 +37,6 @@ fsl.FSLCommand.set_default_output_type('NIFTI_GZ')
 
 # volumes to remove from each timeseries
 vol_to_remove = 5
-
-# bandpass filter cutoffs in HZ, and TR to calculate sigma
-#TR=3.0
-#highpass=0.01
-#lowpass=0.1
 
 # main workflow
 preproc = Workflow(name='func_preproc')
@@ -64,13 +58,9 @@ templates={'rest' : 'resting/raw/{subject}_{session}.nii.gz',
            'dicom':'resting/raw/example_dicoms/{subject}*/{session}/*',
            'uni_highres' : 'struct/uni/{subject}*UNI_Images_merged.nii.gz',
            't1_highres' : 'struct/t1/{subject}*T1_Images_merged.nii.gz',
-#            't1_prep' : 'struct/surf_rh/prep_t1/smooth_1.5/{subject}_rh_mid_T1_avg_smoothdata_data.nii.gz',
            'brain_mask' : 'struct/mask/{subject}*mask.nii.gz',
            'segmentation' : 'struct/seg/{subject}*lbls_merged.nii.gz',
-           'csfmask' : 'struct/csfmask/{subject}*T1_Images_merged_seg_merged_sub_csf.nii.gz',
-#            'thickness_rh' : 'struct/thickness/{subject}*right_cortex_thick.nii.gz',
-#            'thickness_lh' : 'struct/thickness/{subject}*left_cortex_thick.nii.gz',
-#            'mapping' : 'mappings/{session}/corr_{subject}_{session}_*mapping.nii.gz'
+           'csfmask' : 'struct/csfmask/{subject}*T1_Images_merged_seg_merged_sub_csf.nii.gz'
            }    
 selectfiles = Node(nio.SelectFiles(templates, base_directory=data_dir),
                    name="selectfiles")
@@ -133,7 +123,6 @@ preproc.connect([(selectfiles, fixhdr, [('brain_mask', 'data_file'),
                                         ('t1_highres', 'header_file')]),
                  ])
 
-
 # biasfield correction of median epi for better registration
 biasfield = Node(ants.segmentation.N4BiasFieldCorrection(save_bias=True),
                  name='biasfield')
@@ -172,35 +161,20 @@ csfmask = Node(fs.Binarize(match=[1],
                           binary_file='csf_mask.nii.gz'), 
                name='csfmask')
 
-wallmask_rh = Node(fs.Binarize(max=0.2,
-                            out_type = 'nii.gz'), 
-               name='wallmask_rh')
- 
-wallmask_lh = wallmask_rh.clone('wallmask_lh')
-
 preproc.connect([(selectfiles, wmmask, [('segmentation', 'in_file')]),
-                 (selectfiles, csfmask, [('csfmask', 'in_file')]),
-                 (selectfiles, wallmask_rh, [('thickness_rh', 'in_file')]),
-                 (selectfiles, wallmask_lh, [('thickness_lh', 'in_file')])
+                 (selectfiles, csfmask, [('csfmask', 'in_file')])
                  ])
 
-# merge func2struct/struct2func transforms into list
-translist_forw = Node(util.Merge(2),name='translist_forw')
-preproc.connect([(coreg, translist_forw, [('outputnode.epi2highres_lin_itk', 'in2')]),
-                 (nonreg, translist_forw, [('outputnode.epi2highres_warp', 'in1')])])
-
+# merge struct2func transforms into list
 translist_inv = Node(util.Merge(2),name='translist_inv')
 preproc.connect([(coreg, translist_inv, [('outputnode.epi2highres_lin_itk', 'in1')]),
                  (nonreg, translist_inv, [('outputnode.epi2highres_invwarp', 'in2')])])
    
 # merge images into list
-structlist = Node(util.Merge(6),name='structlist')
-preproc.connect([(selectfiles, structlist, [('t1_prep', 'in1')]),
-                 (fixhdr, structlist, [('out_file', 'in2')]),
-                 (wmmask, structlist, [('binary_file', 'in3')]),
-                 (csfmask, structlist, [('binary_file', 'in4')]),
-                 (wallmask_rh, structlist, [('binary_file', 'in5')]),
-                 (wallmask_lh, structlist, [('binary_file', 'in6')])
+structlist = Node(util.Merge(3),name='structlist')
+preproc.connect([(fixhdr, structlist, [('out_file', 'in1')]),
+                 (wmmask, structlist, [('binary_file', 'in2')]),
+                 (csfmask, structlist, [('binary_file', 'in3')])
                  ])
    
 # project brain mask, wm/csf masks, t1 and subcortical mask in functional space
@@ -215,17 +189,6 @@ preproc.connect([(structlist, struct2func, [('out', 'input_image')]),
                  (translist_inv, struct2func, [('out', 'transforms')]),
                  (median, struct2func, [('median_file', 'reference_image')]),
                  ])
-
-# project mapping from functional to anatomical space inverse mapping
-#inverse mapping to project surface
-mapping = Node(ants.ApplyTransforms(dimension=3,
-                                     invert_transform_flags=[False, False],
-                                     interpolation = 'Linear'),
-                    name='mapping')
- 
-preproc.connect([(selectfiles, mapping, [('mapping', 'input_image')]),
-                 (translist_forw, mapping, [('out', 'transforms')]),
-                 (selectfiles, mapping, [('t1_highres', 'reference_image')])])
 
 
 # calculate compcor regressors
@@ -295,7 +258,7 @@ preproc.connect([(session_infosource, sink, [('session', 'container')]),
                 (nonreg, sink, [('outputnode.epi2highres_warp', 'registration.@epi2highres_warp'),
                                 ('outputnode.epi2highres_invwarp', 'registration.@epi2highres_invwarp'),
                                 ('outputnode.epi2highres_nonlin', 'registration.@epi2highres_nonlin')]),
-                (struct2func, sink, [(('output_image', selectindex, [1,2,3]), 'mask.@masks')]),
+                (struct2func, sink, [(('output_image', selectindex, [0,1,2]), 'mask.@masks')]),
                 (artefact, sink, [('norm_files', 'confounds.@norm_motion'),
                                   ('outlier_files', 'confounds.@outlier_files'),
                                   ('intensity_files', 'confounds.@intensity_files'),
@@ -303,16 +266,6 @@ preproc.connect([(session_infosource, sink, [('session', 'container')]),
                                   ('plot_files', 'confounds.@outlier_plots')]),
                  (compcor, sink, [('out_files', 'confounds.@compcor')]),
                  (motreg, sink, [('out_files', 'confounds.@motreg')])
-                 ])
-
-final_sink = Node(nio.DataSink(parameterization=False,
-                               base_directory=final_dir),
-             name='final_sink')
-
-preproc.connect([(session_infosource, final_sink, [('session', 'container')]),
-                 (struct2func, final_sink, [(('output_image', selectindex, [0]), 't1map.@t1'),
-                                            (('output_image', selectindex, [4,5]), 'medial_mask.@masks')]),
-                 (mapping, final_sink, [('output_image', 'func2struct_mapping.@mapping')])
                  ])
     
 preproc.run(plugin='MultiProc', plugin_args={'n_procs' : 9})

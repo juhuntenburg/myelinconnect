@@ -168,11 +168,11 @@ running
 --------
 '''
 
-for sub in ['GAET','HJJT','KSYT', 'OL1T', 'PL6T', 'SC1T', 'WSFT']:
+for sub in ['BP4T', 'GAET','HJJT','KSYT', 'OL1T', 'PL6T', 'SC1T', 'WSFT']:
 
     for hemi in ['lh', 'rh']:
         
-        for kclust in [9]:
+        for kclust in [7,8,9]:
         
             print sub, hemi, kclust
             
@@ -182,20 +182,28 @@ for sub in ['GAET','HJJT','KSYT', 'OL1T', 'PL6T', 'SC1T', 'WSFT']:
             
             func_file='/scr/ilz3/myelinconnect/final_struct_space/rest1_1_meshsmooth_%s/%s_%s_mid_simple_0.01_rest_%s_smoothdata.vtk'%(str(smooth), sub, hemi, hemi)
             mask_file='/scr/ilz3/myelinconnect/final_struct_space/medial_wall_mask/%s_%s_mid_simple_0.01.1D.roi'%(sub, hemi)
-            embed_file="/scr/ilz3/myelinconnect/final_struct_space/clustering_%s/%s_%s_mid_simple_0.01_rest_%s_smoothdata_embed_%s.csv"%(str(smooth), sub, hemi, hemi, str(n_components_embedding))
-            kmeans_file="/scr/ilz3/myelinconnect/final_struct_space/clustering_%s/%s_%s_mid_simple_0.01_rest_%s_smoothdata_embed_%s_kmeans_%s.csv"%(str(smooth), sub, hemi, hemi, str(n_components_embedding), str(n_components_kmeans))
-            subclust_file="/scr/ilz3/myelinconnect/final_struct_space/clustering_%s/%s_%s_mid_simple_0.01_rest_%s_smoothdata_embed_%s_kmeans_%s_subclust.csv"%(str(smooth), sub, hemi, hemi, str(n_components_embedding), str(n_components_kmeans))
+            t1_file='/scr/ilz3/myelinconnect/final_struct_space/t1_smooth_1.5_mesh/%s_%s_mid_simple_0.01_t1_smooth1.5_%s.vtk'%(sub, hemi, hemi)
+            embed_file="/scr/ilz3/myelinconnect/final_struct_space/combined_clustering_%s/%s_%s_mid_simple_0.01_rest_%s_smoothdata_embed_%s.csv"%(str(smooth), sub, hemi, hemi, str(n_components_embedding))
+            kmeans_file="/scr/ilz3/myelinconnect/final_struct_space/combined_clustering_%s/%s_%s_mid_simple_0.01_rest_%s_smoothdata_embed_%s_kmeans_%s.csv"%(str(smooth), sub, hemi, hemi, str(n_components_embedding), str(n_components_kmeans))
+            #subclust_file="/scr/ilz3/myelinconnect/final_struct_space/combined_clustering_%s/%s_%s_mid_simple_0.01_rest_%s_smoothdata_embed_%s_kmeans_%s_subclust.csv"%(str(smooth), sub, hemi, hemi, str(n_components_embedding), str(n_components_kmeans))
             
-            print 'reading vtk file'
+            print 'reading func file'
             vert,face,data=read_vtk(func_file)
             func_data=data['val']
             n_vertices=len(vert['val'])
             all_vertex=range(n_vertices)
             
+            
+            print 'reading t1 file'
+            vert_t1,face_t1,data_t1=read_vtk(t1_file)
+            t1_data=data_t1['val']
+            
             print 'masking'
             mask=np.loadtxt(mask_file)[:,0]
             masked_func_data=func_data
             masked_func_data=np.delete(masked_func_data, mask, 0)
+            masked_t1_data=t1_data
+            masked_t1_data=np.delete(masked_t1_data, mask, 0)
             cortex=np.delete(all_vertex, mask)
             
             print 'computing correlations'
@@ -214,13 +222,26 @@ for sub in ['GAET','HJJT','KSYT', 'OL1T', 'PL6T', 'SC1T', 'WSFT']:
                 embedding_recort[:,e]=recort(len(all_vertex), embedding_results[:,e], cortex, 0)
             np.savetxt(embed_file, embedding_recort, delimiter=",")
             
+            
+            print 'normalising T1'
+            t1_thresh=np.zeros_like(masked_t1_data)
+            for i in range(len(t1_thresh)):
+                if masked_t1_data[i]>1000:
+                    t1_thresh[i]=masked_t1_data[i]
+                else:
+                    t1_thresh[i]=np.mean(masked_t1_data)
+            
+            print 'fusing embedding and t1'
+            feature=np.hstack((embedding_results, t1_thresh.reshape((t1_thresh.shape[0],1))))
+            
+            
             print 'running kmeans'
-            kmeans_results = runKmeans(embedding_results, n_components_kmeans)
+            kmeans_results = runKmeans(feature, n_components_kmeans)
             kmeans_recort = recort(len(all_vertex), kmeans_results, cortex, 1)
             np.savetxt(kmeans_file, kmeans_recort, delimiter=",")
             
             print 'subclustering'
-            subclust_arr=subcluster(kmeans_recort, face['val'], n_vertices)
-            np.savetxt(subclust_file, subclust_arr, delimiter=",")        
+#             subclust_arr=subcluster(kmeans_recort, face['val'], n_vertices)
+#             np.savetxt(subclust_file, subclust_arr, delimiter=",")        
             
             print 'done'

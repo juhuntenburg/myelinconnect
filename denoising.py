@@ -9,7 +9,7 @@ import pandas as pd
 
 df=pd.read_csv('/scr/ilz3/myelinconnect/subjects.csv', header=0)
 subjects=list(df['DB'])
-sessions=['rest1_1']#, 'rest1_2', 'rest2_1', 'rest2_2']
+sessions=['rest1_1', 'rest1_2', 'rest2_1', 'rest2_2']
 
 for subject in subjects:
     for session in sessions:
@@ -17,7 +17,7 @@ for subject in subjects:
         print 'running '+subject+' '+session
         
         base_dir='/scr/ilz3/myelinconnect/resting/preprocessed/'+subject+'/'+session+'/'
-        out_dir='/scr/ilz3/myelinconnect/final/rest1_1/'
+        out_dir='/scr/ilz3/myelinconnect/resting/final/'
         raw_file=glob(base_dir+'realignment/'+subject+'*'+session+'_roi.nii.gz')[0]
         moco_file=glob(base_dir+'realignment/corr_'+subject+'*'+session+'_roi.nii.gz')[0]
         brain_mask=glob(base_dir+'mask/'+subject+'*T1_Images_mask_fixed_trans.nii.gz')[0]
