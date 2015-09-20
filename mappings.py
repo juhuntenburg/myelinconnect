@@ -18,15 +18,15 @@ from nonlinear_coreg import create_nonlinear_pipeline
 # read in subjects and file names
 df=pd.read_csv('/scr/ilz3/myelinconnect/subjects.csv', header=0)
 subjects_db=list(df['DB'])
-
+subjects_db=['BP4T']
 
 # sessions to loop over
-sessions=['rest1_1' ,'rest1_2', 'rest2_1', 'rest2_2']
+sessions=['rest1_1'] # ,'rest1_2', 'rest2_1', 'rest2_2']
 
 # directories
 working_dir = '/scr/ilz3/myelinconnect/working_dir/' 
 data_dir= '/scr/ilz3/myelinconnect/'
-out_dir = '/scr/ilz3/myelinconnect/transformations/'
+#out_dir = '/scr/ilz3/myelinconnect/transformations/'
 
 # set fsl output type to nii.gz
 fsl.FSLCommand.set_default_output_type('NIFTI_GZ')
@@ -55,8 +55,8 @@ templates={'median': 'resting/preprocessed/{subject}/{session}/realignment/corr_
            'epi2highres_lin_itk' : 'resting/preprocessed/{subject}/{session}/registration/epi2highres_lin.txt',
            'epi2highres_warp':'resting/preprocessed/{subject}/{session}/registration/transform0Warp.nii.gz',
            'epi2highres_invwarp':'resting/preprocessed/{subject}/{session}/registration/transform0InverseWarp.nii.gz',
-           't1_prep_rh' : 'struct/surf_rh/prep_t1/smooth_1.5/{subject}_rh_mid_T1_avg_smoothdata_data.nii.gz',
-           't1_prep_lh' : 'struct/surf_lh/prep_t1/smooth_1.5/{subject}_lh_mid_T1_avg_smoothdata_data.nii.gz',
+           #'t1_prep_rh' : 'struct/surf_rh/prep_t1/smooth_1.5/{subject}_rh_mid_T1_avg_smoothdata_data.nii.gz',
+           #'t1_prep_lh' : 'struct/surf_lh/prep_t1/smooth_1.5/{subject}_lh_mid_T1_avg_smoothdata_data.nii.gz',
            #'t1_prep_lh' : 'struct/surf_lh/prep_t1/smooth_1.5/{subject}_lh_mid_T1_avg_smoothdata_data.nii.gz',
            
            }    
@@ -105,32 +105,31 @@ mappings.connect([(selectfiles, struct2func, [('t1_mapping', 'input_image'),
 
 
 # project T1 images to functional space
-t1_preps = Node(util.Merge(2),name='t1_preps')
-mappings.connect([(selectfiles, t1_preps, [('t1_prep_rh', 'in1')]),
-                 (selectfiles, t1_preps, [('t1_prep_rh', 'in2')])])
+#t1_preps = Node(util.Merge(2),name='t1_preps')
+#mappings.connect([(selectfiles, t1_preps, [('t1_prep_rh', 'in1')]),
+#                 (selectfiles, t1_preps, [('t1_prep_rh', 'in2')])])
 
-t12func = MapNode(ants.ApplyTransforms(invert_transform_flags=[True, False],
-                                        dimension=3,
-                                        interpolation='WelchWindowedSinc'),
-                  iterfield=['input_image'],
-                  name='t12func')
+#t12func = MapNode(ants.ApplyTransforms(invert_transform_flags=[True, False],
+#                                        dimension=3,
+#                                        interpolation='WelchWindowedSinc'),
+#                  iterfield=['input_image'],
+#                  name='t12func')
      
-mappings.connect([(selectfiles, t12func, [('median', 'reference_image')]),
-                  (t1_preps, t12func, [('out', 'input_image')]),
-                  (translist_inv, t12func, [('out', 'transforms')]),
-                 ])
+#mappings.connect([(selectfiles, t12func, [('median', 'reference_image')]),
+#                  (t1_preps, t12func, [('out', 'input_image')]),
+#                  (translist_inv, t12func, [('out', 'transforms')]),
+#                 ])
 
   
 # sink relevant files
-sink = Node(nio.DataSink(parameterization=False,
-                               base_directory=out_dir),
-             name='sink')
-
-mappings.connect([(session_infosource, sink, [('session', 'container')]),
-                  (func2struct, sink, [('output_image', 'func_to_t1_mapping.@func')]),
-                    (struct2func, sink, [('output_image', 't1_to_func_mapping.@anat')]),
-                    (t12func, sink, [('output_image', 't1_in_funcspace.@anat')]),
-                    
-                   ])
+# sink = Node(nio.DataSink(parameterization=False,
+#                                base_directory=out_dir),
+#              name='sink')
+# 
+# mappings.connect([(session_infosource, sink, [('session', 'container')]),
+#                   (func2struct, sink, [('output_image', 'func_to_t1_mapping.@func')]),
+#                     (struct2func, sink, [('output_image', 't1_to_func_mapping.@anat')]),
+#                     #(t12func, sink, [('output_image', 't1_in_funcspace.@anat')]),
+#                    ])
     
-mappings.run(plugin='MultiProc', plugin_args={'n_procs' : 9})
+mappings.run() #plugin='MultiProc', plugin_args={'n_procs' : 9})
