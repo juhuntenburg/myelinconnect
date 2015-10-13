@@ -12,9 +12,9 @@ from graphs import graph_from_mesh
 
 '''
 This script maps vertices from a simplified mesh to the closest corresponding 
-vertices of the original mesh using a KDTree implementation. These vertices are 
-then used as seeds for a voronoi tesselation of the complex mesh which is
-implemented as a competitive fast marching in a balanced binary tree. 
+vertices of the original mesh using a KDTree. These vertices are 
+then used as seeds for a Voronoi tesselation of the complex mesh which is
+implemented as a competitive fast marching in a balanced binary (AVL)tree. 
 Thus a mapping is created which associates each vertex of the complex mesh 
 with the closest vertex of the simple mesh.
 '''
