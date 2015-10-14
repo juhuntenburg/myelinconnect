@@ -3,10 +3,11 @@ import numpy as np
 import scipy.spatial as spatial
 import sys
 import time
+import os
 import pandas as pd
 from joblib import Memory, Parallel, delayed
 # from https://pypi.python.org/pypi/bintrees/2.0.2
-from bintrees import FastAVLTree
+from bintrees import FastAVLTree, FastBinaryTree
 # from https://github.com/juhuntenburg/brainsurfacescripts
 from vtk_rw import read_vtk, write_vtk
 from graphs import graph_from_mesh
@@ -27,43 +28,47 @@ Implementation used: https://pypi.python.org/pypi/bintrees/2.0.2 (cython version
 
 
 # function returning generator for sub,hemi tuples fro joblib
-def tupler(subjects, hemis, log_file):
+def tupler(subjects, hemis):
     for s in subjects:
         for h in hemis:
-            yield (s, h, log_file)
+            yield (s, h)
 
 # function to find unlabelled neighbours of a node in the graph
 # and add them to the tree correctly
-def add_neighbours(node, graph, labels, tree):
+def add_neighbours(node, length, graph, labels, tree):
     # find direct neighbours of the node
     neighbours = np.array(graph.neighbors(node))
     # check that they don't already have a label
     unlabelled = neighbours[np.where(labels[neighbours][:,1]==-1)[0]]
     # insert source neighbour pair with edge length to tree
     for u in unlabelled:
-        tree.insert(graph[node][u]['length'],(node, u))
+        new_length = length + graph[node][u]['length']
+        tree.insert(new_length,(node, u))
+    
     return tree
 
 # function to write time and message to log file
 def log(log_file, message, logtime=True):
     with open(log_file, 'a') as f:
-        if timing:
+        if logtime:
             f.write(time.ctime()+'\n')
         f.write(message+'\n')
 
-# main function (might be good to split eventually)
-@memory.cache
-def create_mapping((sub, hemi, log_file)):
 
+# main function (might be good to split eventually)
+def create_mapping((sub, hemi)):
+
+    
     # log different steps in logfile
+    log_file = '/scr/ilz3/myelinconnect/working_dir/complex_to_simple/BIN_log_worker_%s.txt'%(str(os.getpid()))
     log(log_file, 'Processing %s %s'%(sub, hemi))
 
     # not optimal to have this hardcoded inside the function
     # figure out how to pipe with parallel and move outside
     complex_file = '/scr/ilz3/myelinconnect/struct/surf_%s/orig/mid_surface/%s_%s_mid.vtk'
     simple_file = '/scr/ilz3/myelinconnect/groupavg/indv_space/%s/lowres_%s_d_def.vtk'# version d
-    label_file = '/scr/ilz3/myelinconnect/groupavg/indv_space/%s/%s_%s_highres2lowres_d_labels.txt'
-    surf_label_file = '/scr/ilz3/myelinconnect/groupavg/indv_space/%s/%s_%s_highres2lowres_d_labels.vtk'
+    label_file = '/scr/ilz3/myelinconnect/all_data_on_simple_surf/labels/BIN/%s_%s_highres2lowres_labels.npy'
+    surf_label_file = '/scr/ilz3/myelinconnect/all_data_on_simple_surf/labels/BIN/%s_%s_highres2lowres_labels.vtk'
 
     # load the meshes
     log(log_file, '...loading data', logtime=False)
@@ -101,14 +106,14 @@ def create_mapping((sub, hemi, log_file)):
 
     # initiate AVLTree for binary search
     log(log_file, '...building search tree')
-    tree = FastAVLTree()
+    tree = FastBinaryTree()
     # organisation of the tree will be
     # key: edge length
     # value: tuple of vertices (source, target)
 
     # find all neighbours of the voronoi seeds
     for v in voronoi_seed_idx:
-        add_neighbours(v, complex_graph, labelling, tree)
+        add_neighbours(v, 0, complex_graph, labelling, tree)
 
     # Competetive fast marching starting from voronoi seeds
     log(log_file, '...marching')
@@ -116,6 +121,7 @@ def create_mapping((sub, hemi, log_file)):
         while tree.count > 0:
             # pop the item with minimum edge length
             min_item = tree.pop_min()
+            length = min_item[0]
             source = min_item[1][0]
             target = min_item[1][1]
 
@@ -128,11 +134,11 @@ def create_mapping((sub, hemi, log_file)):
                     labelling[target][1] = labelling[source][1]
 
             # add neighbours of target to tree
-            add_neighbours(target, complex_graph, labelling, tree)
+            add_neighbours(target, length, complex_graph, labelling, tree)
 
     # write out labelling file and surface with labels
     log(log_file, '...saving data')
-    np.savetxt(label_file%(sub, sub, hemi), labelling)
+    np.save(label_file%(sub, sub, hemi), labelling)
     write_vtk(surf_label_file%(sub, sub, hemi), complex_v, complex_f,
                 data=labelling[:,1, np.newaxis])
 
@@ -143,15 +149,13 @@ def create_mapping((sub, hemi, log_file)):
 
 if __name__ == "__main__":
 
+    #cachedir = '/scr/ilz3/myelinconnect/working_dir/complex_to_simple/'
+    #memory = Memory(cachedir=cachedir)
+    
     subjects = pd.read_csv('/scr/ilz3/myelinconnect/subjects.csv')
     subjects=list(subjects['DB'])
     subjects.remove('KSMT')
-
     hemis = ['lh', 'rh']
 
-    log_files = '/scr/ilz3/working_dir/complex_to_simple/log.txt'
-    cachedir = '/scr/ilz3/working_dir/complex_to_simple/'
-    memory = Memory(cachedir=cachedir, mmap_mode='r')
-
-    Parallel(n_jobs=8)(delayed(create_mapping)(i)
-                        for i in tupler(subjects, hemis, log_file))
+    Parallel(n_jobs=16)(delayed(create_mapping)(i) 
+                               for i in tupler(subjects, hemis))
