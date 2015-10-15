@@ -60,19 +60,19 @@ def create_mapping((sub, hemi)):
 
     
     # log different steps in logfile
-    log_file = '/scr/ilz3/myelinconnect/working_dir/complex_to_simple/BIN_log_worker_%s.txt'%(str(os.getpid()))
+    log_file = '/scr/ilz3/myelinconnect/working_dir/complex_to_simple/AVL_log_worker_%s.txt'%(str(os.getpid()))
     log(log_file, 'Processing %s %s'%(sub, hemi))
 
     # not optimal to have this hardcoded inside the function
     # figure out how to pipe with parallel and move outside
     complex_file = '/scr/ilz3/myelinconnect/struct/surf_%s/orig/mid_surface/%s_%s_mid.vtk'
     simple_file = '/scr/ilz3/myelinconnect/groupavg/indv_space/%s/lowres_%s_d_def.vtk'# version d
-    label_file = '/scr/ilz3/myelinconnect/all_data_on_simple_surf/labels/BIN/%s_%s_highres2lowres_labels.npy'
-    surf_label_file = '/scr/ilz3/myelinconnect/all_data_on_simple_surf/labels/BIN/%s_%s_highres2lowres_labels.vtk'
+    label_file = '/scr/ilz3/myelinconnect/all_data_on_simple_surf/labels/AVL/%s_%s_highres2lowres_labels.npy'
+    surf_label_file = '/scr/ilz3/myelinconnect/all_data_on_simple_surf/labels/AVL/%s_%s_highres2lowres_labels.vtk'
 
     # load the meshes
     log(log_file, '...loading data', logtime=False)
-    complex_v,complex_f, complex_d = read_vtk(complex_file%(hemi, sub, hemi))
+    complex_v, complex_f, complex_d = read_vtk(complex_file%(hemi, sub, hemi))
     simple_v, simple_f, simple_d = read_vtk(simple_file%(sub, hemi))
 
     # find those points on the individuals complex mesh that correspond best
@@ -106,7 +106,7 @@ def create_mapping((sub, hemi)):
 
     # initiate AVLTree for binary search
     log(log_file, '...building search tree')
-    tree = FastBinaryTree()
+    tree = FastAVLTree()
     # organisation of the tree will be
     # key: edge length
     # value: tuple of vertices (source, target)
@@ -138,11 +138,11 @@ def create_mapping((sub, hemi)):
 
     # write out labelling file and surface with labels
     log(log_file, '...saving data')
-    np.save(label_file%(sub, sub, hemi), labelling)
-    write_vtk(surf_label_file%(sub, sub, hemi), complex_v, complex_f,
+    np.save(label_file%(sub, hemi), labelling)
+    write_vtk(surf_label_file%(sub, hemi), complex_v, complex_f,
                 data=labelling[:,1, np.newaxis])
 
-    log(log_file, 'Finished %s %s'(sub, hemi))
+    log(log_file, 'Finished %s %s'%(sub, hemi))
 
     return log_file
 

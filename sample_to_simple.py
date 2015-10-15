@@ -15,7 +15,7 @@ def tupler(subjects, hemis):
         for h in hemis:
             yield (s, h)
 
-@memory.cache
+#@memory.cache
 def sample_to_simple_surf(sub, hemi):
 
     highres_file = '/scr/ilz3/myelinconnect/struct/surf_%s/prep_t1/profiles/%s_%s_mid_proflies.vtk'%(hemi, sub, hemi)
@@ -61,5 +61,5 @@ if __name__ == "__main__":
     cachedir = '/scr/ilz3/working_dir/sample_to_simple/'
     memory = Memory(cachedir=cachedir, mmap_mode='r')
 
-    Parallel(n_jobs=4)(delayed(sample_to_simple)(i)
+    Parallel(n_jobs=16)(delayed(memory.cache(sample_to_simple))(i)
                            for i in tupler(subjects, hemis))
