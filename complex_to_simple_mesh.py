@@ -60,7 +60,7 @@ def create_mapping((sub, hemi)):
 
     
     # log different steps in logfile
-    log_file = '/scr/ilz3/myelinconnect/working_dir/complex_to_simple/AVL_log_worker_%s.txt'%(str(os.getpid()))
+    log_file = '/scr/ilz3/myelinconnect/working_dir/complex_to_simple/fixed_AVL_log_worker_%s.txt'%(str(os.getpid()))
     log(log_file, 'Processing %s %s'%(sub, hemi))
 
     # not optimal to have this hardcoded inside the function
@@ -78,10 +78,9 @@ def create_mapping((sub, hemi)):
     # find those points on the individuals complex mesh that correspond best
     # to the simplified group mesh in subject space
     log(log_file, '...running kdtree')
-    inaccuracy, mapping = spatial.KDTree(complex_v).query(simple_v)
+    inaccuracy, voronoi_seed_idx  = spatial.KDTree(complex_v).query(simple_v)
     # find coordinates of those points in the highres mesh
-    voronoi_seed_idx = mapping
-    voronoi_seed_coord = complex_v[mapping]
+    voronoi_seed_coord = complex_v[voronoi_seed_idx]
 
     # double check differences
     log(log_file, '...checking kdtree')
@@ -155,7 +154,8 @@ if __name__ == "__main__":
     subjects = pd.read_csv('/scr/ilz3/myelinconnect/subjects.csv')
     subjects=list(subjects['DB'])
     subjects.remove('KSMT')
-    hemis = ['lh', 'rh']
+    subjects.remove('KSYT')
+    hemis = ['rh']
 
-    Parallel(n_jobs=16)(delayed(create_mapping)(i) 
+    Parallel(n_jobs=7)(delayed(create_mapping)(i) 
                                for i in tupler(subjects, hemis))
