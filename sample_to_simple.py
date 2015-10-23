@@ -2,6 +2,7 @@
 from __future__ import division
 import numpy as np
 from vtk_rw import read_vtk, write_vtk
+from simplification import sample_simple
 from joblib import Memory, Parallel, delayed
 
 '''
@@ -14,18 +15,6 @@ def tupler(subjects, hemis):
     for s in subjects:
         for h in hemis:
             yield (s, h)
-
-def sample_simple(highres_data, labels):
-    # create new empty lowres data array
-    lowres_data = np.empty((int(labels.max()+1), highres_data.shape[1]))
-    # find all vertices on highres and mean
-    for l in range(int(labels.max())):
-        patch = np.where(labels==l)[0]
-        patch_data = highres_data[patch]
-        patch_mean = np.mean(patch_data, axis=0)
-        lowres_data[l] = patch_mean
-    
-    return lowres_data
 
 #@memory.cache
 def looping(sub, hemi):

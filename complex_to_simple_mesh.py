@@ -11,6 +11,8 @@ from bintrees import FastAVLTree, FastBinaryTree
 # from https://github.com/juhuntenburg/brainsurfacescripts
 from vtk_rw import read_vtk, write_vtk
 from graphs import graph_from_mesh
+from simplification import add_neighbours, find_voronoi_seeds, competetive_fast_marching
+import pdb
 
 
 '''
@@ -39,116 +41,18 @@ def log(log_file, message, logtime=True):
         if logtime:
             f.write(time.ctime()+'\n')
         f.write(message+'\n')
-
-def find_voronoi_seeds(simple_vertices, complex_vertices):
-    '''
-    Finds those points on the complex mehs that correspoind best to the
-    simple mesh while forcing a one-to-one mapping
-    '''
-    # make array for writing in final voronoi seed indices
-    voronoi_seed_idx = np.zeros((simple_vertices.shape[0],), dtype='int64')-1
-    missing = np.where(voronoi_seed_idx==-1)[0].shape[0]
-    mapping_single = np.zeros_like(voronoi_seed_idx)
-
-    neighbours = 0
-    col = 0
-
-    while missing != 0:
-
-        neighbours += 100
-        # find nearest neighbours
-        inaccuracy, mapping  = spatial.KDTree(complex_vertices).query(simple_vertices, k=neighbours)
-        # go through columns of nearest neighbours until unique mapping is
-        # achieved, if not before end of neighbours, extend number of neighbours
-        while col < neighbours:
-            # find all missing voronoi seed indices
-            missing_idx = np.where(voronoi_seed_idx==-1)[0]
-            missing = missing_idx.shape[0]
-            if missing == 0:
-                break
-            else:
-                # for missing entries fill in next neighbour
-                mapping_single[missing_idx]=np.copy(mapping[missing_idx,col])
-                # find unique values in mapping_single
-                unique, double_idx = np.unique(mapping_single, return_inverse = True)
-                # empty voronoi seed index
-                voronoi_seed_idx = np.zeros((simple_vertices.shape[0],), dtype='int64')-1
-                # fill voronoi seed idx with unique values
-                for u in range(unique.shape[0]):
-                    # find the indices of this value in mapping
-                    entries = np.where(double_idx==u)[0]
-                    # set the first entry to the value
-                    voronoi_seed_idx[entries[0]] = unique[u]
-                # go to next column
-                col += 1 
-                
-    return voronoi_seed_idx, inaccuracy
-
-
-# function to find unlabelled neighbours of a node in the graph
-# and add them to the tree correctly
-def add_neighbours(node, length, graph, labels, tree):
-    # find direct neighbours of the node
-    neighbours = np.array(graph.neighbors(node))
-    # check that they don't already have a label
-    unlabelled = neighbours[np.where(labels[neighbours][:,1]==-1)[0]]
-    # insert source neighbour pair with edge length to tree
-    for u in unlabelled:
-        new_length = length + graph[node][u]['length']
-        tree.insert(new_length,(node, u))
-    
-    return tree
-
-
-def competetive_fast_marching(vertices, graph, seeds):
-    # make a labelling container to be filled with the search tree
-    # first column are the vertex indices of the complex mesh
-    # second column are the labels from the simple mesh
-    # (-1 for all but the corresponding points for now)
-    labels = np.zeros((complex_vertices.shape[0],2), dtype='int64')-1
-    labels[:,0] = range(complex_vertices.shape[0])
-    for i in range(seeds.shape[0]):
-        labels[seeds[i]][1] = i
-    # initiate AVLTree for binary search
-    tree = FastAVLTree()
-    # organisation of the tree will be
-    # key: edge length; value: tuple of vertices (source, target)
-    # add all neighbours of the voronoi seeds
-    for v in seeds:
-        add_neighbours(v, 0, graph, labels, tree)
-    # Competetive fast marching starting from voronoi seeds
-    while tree.count > 0:
-        # pop the item with minimum edge length
-        min_item = tree.pop_min()
-        length = min_item[0]
-        source = min_item[1][0]
-        target = min_item[1][1]
-        #if target no label yet (but source does!), assign label of source
-        if labels[target][1] == -1:
-            if labels[source][1] == -1:
-                sys.exit('Source has no label, something went wrong!')
-            else:
-                # assign label of source to target
-                labels[target][1] = labels[source][1]
-        
-        # test if labelling is complete
-        if any(labels[:,1]==-1):
-            # if not, add neighbours of target to tree
-            add_neighbours(target, length, graph, labels, tree)
-        else:
-            break
-    
-    return labels
     
 
 # main function for looping over subject and hemispheres
 def create_mapping((sub, hemi)):
 
-    log_file = '/scr/ilz3/myelinconnect/working_dir/complex_to_simple/fixed_AVL_log_worker_%s.txt'%(str(os.getpid()))
     complex_file = '/scr/ilz3/myelinconnect/struct/surf_%s/orig/mid_surface/%s_%s_mid.vtk'
     simple_file = '/scr/ilz3/myelinconnect/groupavg/indv_space/%s/lowres_%s_d_def.vtk'# version d
-    label_file = '/scr/ilz3/myelinconnect/all_data_on_simple_surf/labels/AVL/%s_%s_highres2lowres_labels.npy'
-    surf_label_file = '/scr/ilz3/myelinconnect/all_data_on_simple_surf/labels/AVL/%s_%s_highres2lowres_labels.vtk'
+    
+    log_file = '/scr/ilz3/myelinconnect/all_data_on_simple_surf/labels/logs/log_worker_%s.txt'%(str(os.getpid()))
+    seed_file = '/scr/ilz3/myelinconnect/all_data_on_simple_surf/labels/%s_%s_highres2lowres_seeds.npy'
+    label_file = '/scr/ilz3/myelinconnect/all_data_on_simple_surf/labels/%s_%s_highres2lowres_labels.npy'
+    surf_label_file = '/scr/ilz3/myelinconnect/all_data_on_simple_surf/labels/%s_%s_highres2lowres_labels.vtk'
 
     # load the meshes
     log(log_file, 'Processing %s %s'%(sub, hemi))
@@ -159,7 +63,11 @@ def create_mapping((sub, hemi)):
     # find those points on the individuals complex mesh that correspond best
     # to the simplified group mesh in subject space
     log(log_file, '...finding unique voronoi seeds')
+    
+    #voronoi_seed_idx = np.load(seed_file%(sub, hemi))
+    
     voronoi_seed_idx, inaccuracy  = find_voronoi_seeds(simple_v, complex_v)
+    np.save(seed_file%(sub, hemi), voronoi_seed_idx)
     # find coordinates of those points in the highres mesh
     voronoi_seed_coord = complex_v[voronoi_seed_idx]
 
@@ -189,8 +97,6 @@ def create_mapping((sub, hemi)):
 
     return log_file
 
-
-
 if __name__ == "__main__":
 
     #cachedir = '/scr/ilz3/myelinconnect/working_dir/complex_to_simple/'
@@ -199,7 +105,6 @@ if __name__ == "__main__":
     subjects = pd.read_csv('/scr/ilz3/myelinconnect/subjects.csv')
     subjects=list(subjects['DB'])
     subjects.remove('KSMT')
-    subjects.remove('KSYT')
     hemis = ['lh', 'rh']
 
     Parallel(n_jobs=16)(delayed(create_mapping)(i) 

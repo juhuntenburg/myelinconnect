@@ -18,15 +18,14 @@ from nonlinear_coreg import create_nonlinear_pipeline
 # read in subjects and file names
 df=pd.read_csv('/scr/ilz3/myelinconnect/subjects.csv', header=0)
 subjects_db=list(df['DB'])
-subjects_db=['BP4T']
-
+subjects_db.remove('KSMT')
 # sessions to loop over
-sessions=['rest1_1'] # ,'rest1_2', 'rest2_1', 'rest2_2']
+sessions=['rest1_1' ,'rest1_2', 'rest2_1', 'rest2_2']
 
 # directories
-working_dir = '/scr/ilz3/myelinconnect/working_dir/' 
+working_dir = '/scr/ilz3/myelinconnect/working_dir/mappings_fixhdr/' 
 data_dir= '/scr/ilz3/myelinconnect/'
-#out_dir = '/scr/ilz3/myelinconnect/transformations/'
+out_dir = '/scr/ilz3/myelinconnect/transformations/'
 
 # set fsl output type to nii.gz
 fsl.FSLCommand.set_default_output_type('NIFTI_GZ')
@@ -49,8 +48,8 @@ session_infosource.iterables=[('session', sessions)]
 
 # select files
 templates={'median': 'resting/preprocessed/{subject}/{session}/realignment/corr_{subject}_{session}_roi_detrended_median_corrected.nii.gz',
-           'median_mapping' : 'mappings/rest/corr_{subject}_{session}_*mapping.nii.gz',
-           't1_mapping': 'mappings/t1/{subject}*T1_Images_merged_mapping.nii.gz',
+           'median_mapping' : 'mappings/rest/fixed_hdr/corr_{subject}_{session}_*mapping_fixed.nii.gz',
+           #'t1_mapping': 'mappings/t1/{subject}*T1_Images_merged_mapping.nii.gz',
            't1_highres' : 'struct/t1/{subject}*T1_Images_merged.nii.gz',
            'epi2highres_lin_itk' : 'resting/preprocessed/{subject}/{session}/registration/epi2highres_lin.txt',
            'epi2highres_warp':'resting/preprocessed/{subject}/{session}/registration/transform0Warp.nii.gz',
@@ -92,16 +91,16 @@ mappings.connect([(selectfiles, func2struct, [('median_mapping', 'input_image'),
 
 
 # project structural mapping to functional space
-struct2func = Node(ants.ApplyTransforms(invert_transform_flags=[True, False],
-                                        dimension=3,
-                                        input_image_type=3,
-                                        interpolation='Linear'),
-                    name='struct2func')
+#struct2func = Node(ants.ApplyTransforms(invert_transform_flags=[True, False],
+#                                        dimension=3,
+#                                        input_image_type=3,
+#                                        interpolation='Linear'),
+#                    name='struct2func')
     
-mappings.connect([(selectfiles, struct2func, [('t1_mapping', 'input_image'),
-                                                ('median', 'reference_image')]),
-                    (translist_inv, struct2func, [('out', 'transforms')]),
-                 ])
+#mappings.connect([(selectfiles, struct2func, [('t1_mapping', 'input_image'),
+#                                                ('median', 'reference_image')]),
+#                    (translist_inv, struct2func, [('out', 'transforms')]),
+#                 ])
 
 
 # project T1 images to functional space
@@ -122,14 +121,14 @@ mappings.connect([(selectfiles, struct2func, [('t1_mapping', 'input_image'),
 
   
 # sink relevant files
-# sink = Node(nio.DataSink(parameterization=False,
-#                                base_directory=out_dir),
-#              name='sink')
-# 
-# mappings.connect([(session_infosource, sink, [('session', 'container')]),
-#                   (func2struct, sink, [('output_image', 'func_to_t1_mapping.@func')]),
+sink = Node(nio.DataSink(parameterization=False,
+                                base_directory=out_dir),
+              name='sink')
+ 
+mappings.connect([(session_infosource, sink, [('session', 'container')]),
+                   (func2struct, sink, [('output_image', 'func_to_t1_mapping.@func')]),
 #                     (struct2func, sink, [('output_image', 't1_to_func_mapping.@anat')]),
 #                     #(t12func, sink, [('output_image', 't1_in_funcspace.@anat')]),
-#                    ])
+                    ])
     
-mappings.run() #plugin='MultiProc', plugin_args={'n_procs' : 9})
+mappings.run(plugin='MultiProc', plugin_args={'n_procs' : 16})
