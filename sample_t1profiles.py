@@ -1,9 +1,10 @@
-
 from __future__ import division
 import numpy as np
 from vtk_rw import read_vtk, write_vtk
 from simplification import sample_simple
 from joblib import Memory, Parallel, delayed
+import os
+import pandas as pd
 
 def tupler(subjects, hemis):
     for s in subjects:
@@ -18,8 +19,8 @@ def looping((sub, hemi)):
     old_lowres_file = '/scr/ilz3/myelinconnect/groupavg/indv_space/%s/lowres_%s_d_def.vtk'%(sub, hemi)
 
     
-    new_lowres_file = '/scr/ilz3/myelinconnect/all_data_on_simple_surf/t1/%s_%s_profiles_lowres.vtk'%(sub, hemi)
-    data_file = '/scr/ilz3/myelinconnect/final_data_on_surfaces/t1/%s_%s_profiles_lowres.npy'%(sub, hemi)
+    new_lowres_file = '/scr/ilz3/myelinconnect/all_data_on_simple_surf/t1/%s_%s_profiles.vtk'%(sub, hemi)
+    data_file = '/scr/ilz3/myelinconnect/all_data_on_simple_surf/t1/%s_%s_profiles.npy'%(sub, hemi)
 
 
     # load data
@@ -31,27 +32,30 @@ def looping((sub, hemi)):
     new_lowres_d = sample_simple(highres_d, labels)
 
     # save lowres vtk and txt
-    write_vtk(new_lowres_file, lowres_v, lowres_f, data=new_lowres_d)
+    #write_vtk(new_lowres_file, lowres_v, lowres_f, data=new_lowres_d)
     np.save(data_file, new_lowres_d)
+    
+    if os.path.isfile(data_file):
+        print sub+' '+hemi+' finished'
 
     return
 
 
 if __name__ == "__main__":
 
-    #subjects = pd.read_csv('/scr/ilz3/myelinconnect/subjects.csv')
-    #subjects=list(subjects['DB'])
-    #subjects.remove('KSMT')
+    subjects = pd.read_csv('/scr/ilz3/myelinconnect/subjects.csv')
+    subjects=list(subjects['DB'])
+    subjects.remove('KSMT')
 
-    subjects = ['KSYT', 'SC1T', 'WSFT']
-
-    hemis = ['lh', 'rh']
+    hemis = ['rh']
 
     #cachedir = '/scr/ilz3/working_dir/sample_to_simple/'
     #memory = Memory(cachedir=cachedir, mmap_mode='r')
 
-    #Parallel(n_jobs=6)(delayed(memory.cache(looping))(i)
-    #                       for i in tupler(subjects, hemis))
-    
-    Parallel(n_jobs=6)(delayed(looping)(i)
+    Parallel(n_jobs=8)(delayed(looping)(i)
                            for i in tupler(subjects, hemis))
+    
+    #for sub in subjects:
+    #    for hemi in hemis:
+    #        print sub, hemi
+    #        looping((sub, hemi))

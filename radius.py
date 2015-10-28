@@ -22,7 +22,18 @@ complex_radius = 2
 print time.ctime()
 complex_matrix=gdist.local_gdist_matrix(complex_vertices, complex_faces, max_distance=complex_radius)
 
-#for v in range(len(simple_v.shape[0])):
+for sv in range(len(simple_v.shape[0])):
+    dist = 1000000
+    for cv in range(len(complex_v.shape[0])):
+        if sv in complex_matrix[:,cv].indices:
+            dist_now = complex_matrix[:,cv][sv].data
+            if dist_now < dist:
+                dist = dist_now
+                
+
+
+quatsch, need to tunr around
+             
 #    inradius=list(complex_matrix[:,v].indices)
     # find
 

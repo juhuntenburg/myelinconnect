@@ -1,0 +1,19 @@
+#!/bin/bash
+
+# save surfaces as ply (e.g. paraview)
+
+# inflate using meshlab script smooth.mlx (Taubin Smooth with 10 steps)
+meshlabserver -i lowres_lh_d.ply -o lowres_lh_d_infl.ply -s inflate.mlx
+
+# start suma
+AFNI
+quickspec -tn PLY lowres_lh_d_infl.ply -spec lh_infl.spec
+suma -spec lh_infl.spec
+
+# make surface one colour
+View -> Object controller -> raise the threshold to max
+
+# draw mask
+Tools -> Draw ROI -> Draw with right clicks -> Join -> click inside ROI -> Finish -> Save (1D)
+
+# can be read e.g. with np.loadtext(mask_file)[:,0]
