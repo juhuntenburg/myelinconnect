@@ -5,12 +5,12 @@ import pandas as pd
 import sys
 
 
-#subjects = pd.read_csv('/scr/ilz3/myelinconnect/subjects.csv')
-#subjects=list(subjects['DB'])
-#subjects.remove('KSMT')
+subjects = pd.read_csv('/scr/ilz3/myelinconnect/subjects.csv')
+subjects=list(subjects['DB'])
+subjects.remove('KSMT')
 
-subjects = sys.argv[1]
-subjects = [subjects]
+#subjects = sys.argv[1]
+#subjects = [subjects]
 
 hemis = ['rh']
 sessions = ['1_1', '1_2', '2_1', '2_2']
@@ -18,7 +18,8 @@ sessions = ['1_1', '1_2', '2_1', '2_2']
 rest_file = '/scr/ilz3/myelinconnect/all_data_on_simple_surf/rest/%s_%s_rest%s.npy'
 corr_file = '/scr/ilz3/myelinconnect/all_data_on_simple_surf/corr/%s_%s_rest%s_corr.npy'
 avg_corr_file = '/scr/ilz3/myelinconnect/all_data_on_simple_surf/corr/%s_%s_avg_corr.npy'
-sub_avg_file = '/scr/ilz3/myelinconnect/all_data_on_simple_surf/corr/%s_allsub_avg_corr.npy'
+sub_avg_file = '/scr/ilz3/myelinconnect/all_data_on_simple_surf/corr/%s_allsub_avg_corr_thr.npy'
+#sub_avg_file = '/scr/ilz3/myelinconnect/all_data_on_simple_surf/corr/%s_allsub_avg_corr.npy'
 
 for hemi in hemis:
     
@@ -34,10 +35,12 @@ for hemi in hemis:
         # find out if correlation matrix has been produced before and load
         try:
             avg_corr = np.load(avg_corr_file%(sub, hemi))
+            print 'loaded avg corr '+sub
             
         # if not, create avg correlation matrix over all 4 runs
         except IOError:
             
+            print 'calculating avg corr '+sub
             # make empty matrix
             avg_corr_z = np.zeros((get_size, get_size))
             
@@ -78,17 +81,23 @@ for hemi in hemis:
             np.save(avg_corr_file%(sub, hemi), avg_corr)
             #del avg_corr
             
-            # threshold to maintain only top 10% of correlations
-            avg_corr_thr =
-            
-            # add to cross subject average
-            sub_avg += avg_corr_thr
-            
-            # increase sub count for division
-            sub_count += 1
-            
-        sub_avg = sub_avg / sub_count
-        np.save(sub_avg_file%(hemi), sub_avg)
+        # threshold to maintain only top 10% of correlations
+        thr = np.percentile(avg_corr, 90)
+        
+        # add to cross subject average
+        print 'adding to avg '+sub
+        sub_avg[avg_corr>thr] += 1
+
+        #sub_avg += avg_corr
+        del avg_corr
+        
+        # increase sub count for division
+        sub_count += 1
+    
+    print 'dividing'
+    sub_avg = sub_avg / sub_count
+    print 'saving'
+    np.save(sub_avg_file%(hemi), sub_avg)
         
         
         
