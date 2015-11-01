@@ -116,20 +116,26 @@ for hemi in hemis:
         del corr
         cortex=np.delete(all_vertex, mask)
         
-        print 'running embedding'
-        K = (masked_corr + 1) / 2.  
-        v = np.sqrt(np.sum(K, axis=1)) 
-        A = K/(v[:, None] * v[None, :])  
-        del K
-        A = np.squeeze(A * [A > 0])
-        embedding_results = runEmbed(A, n_components_embedding)
         
-        embedding_recort=np.zeros((len(all_vertex),embedding_results.shape[1])) 
-        for e in range(embedding_results.shape[1]):
-            embedding_recort[:,e]=recort(len(all_vertex), 
-                                         embedding_results[:,e], cortex, 0)
-        np.savetxt(embed_file%(hemi, str(n_components_embedding)), 
-                   embedding_recort, delimiter=",")
+        try:
+            np.loadtxt(embed_file%(hemi, str(n_components_embedding)))
+            
+        except IOError: 
+            
+            print 'running embedding'
+            K = (masked_corr + 1) / 2.  
+            v = np.sqrt(np.sum(K, axis=1)) 
+            A = K/(v[:, None] * v[None, :])  
+            del K
+            A = np.squeeze(A * [A > 0])
+            embedding_results = runEmbed(A, n_components_embedding)
+        
+            embedding_recort=np.zeros((len(all_vertex),embedding_results.shape[1])) 
+            for e in range(embedding_results.shape[1]):
+                embedding_recort[:,e]=recort(len(all_vertex), 
+                                             embedding_results[:,e], cortex, 0)
+            np.savetxt(embed_file%(hemi, str(n_components_embedding)), 
+                       embedding_recort, delimiter=",")
         
         print 'running kmeans'
         kmeans_results = runKmeans(embedding_results, n_components_kmeans)
