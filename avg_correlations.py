@@ -4,7 +4,6 @@ from vtk_rw import read_vtk, write_vtk
 import pandas as pd
 import sys
 import h5py
-from 
 
 
 subjects = pd.read_csv('/scr/ilz3/myelinconnect/subjects.csv')
@@ -100,6 +99,3 @@ for hemi in hemis:
     sub_avg = sub_avg / sub_count
     print 'saving'
     np.save(sub_avg_file%(hemi), sub_avg)
-        
-        
-        

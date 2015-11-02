@@ -51,45 +51,6 @@ def recort(n_vertices, data, cortex, increase):
         count = count +1
     return d
 
-# def subcluster(kmeans, triangles, n_vertices):
-#     # make a dictionary for kmeans clusters and subclusters
-#     clust_subclust={}
-#     # loop through all kmeans clusters (and the mask cluster with value zero)
-#     for c in range(int(kmeans.max()+1)):
-#         # add dic entry
-#         clust_subclust['k'+str(c)]=[]
-#         # extract all nodes of the cluster
-#         clust=list(np.where(kmeans==c)[0])
-#         # while not all nodes have been removed from the cluster
-#         while len(clust)>0:
-#             #start at currently first node in cluster
-#             neighbours=[clust[0]]
-#             # go through growing list of neighbours in the subcluster
-#             for i in neighbours:
-#                 #find all triangles that contain current
-#                 for j in range(triangles.shape[0]):
-#                     if i in triangles[j]:
-#                         # add all nodes of in this triangle to the neighbours list
-#                         n=list(triangles[j])
-#                         # but only if they aren't already in the list and if they are in clust
-#                         [neighbours.append(x) for x in n if x in clust and x not in neighbours]
-#                         # remove assigned nodes from the cluster list
-#                         [clust.remove(x) for x in n if x in clust]
-#             # when no new neighbours can be found, add subcluster to subcluster list 
-#             # and start new subcluster from first node in remaining cluster list
-#             clust_subclust['k'+str(c)].append(neighbours)
-#     
-#     # make array with original kmeans clusters and subclusters        
-#     subclust_full = np.zeros((n_vertices, int(kmeans.max()+1)))
-#     count = 0
-#     for c in range(len(clust_subclust.keys())):
-#         for i in range(len(clust_subclust['k'+str(c)])):
-#             for j in clust_subclust['k'+str(c)][i]:
-#                 subclust_full[j][c] = i+1
-#     subclust_arr=np.hstack((np.reshape(kmeans, (kmeans.shape[0],1)), subclust_full))
-#     
-#     return subclust_arr
-
 
 '''
 running
