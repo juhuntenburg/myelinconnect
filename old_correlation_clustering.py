@@ -1,9 +1,9 @@
 from __future__ import division
 import numpy as np
-import numexpr as ne
-ne.set_num_threads(ne.ncores-2)
+#import numexpr as ne
+#ne.set_num_threads(ne.ncores)
 import pandas as pd
-import hcp_corr
+#import hcp_corr
 import h5py
 
 
@@ -11,17 +11,17 @@ subjects = pd.read_csv('/scr/ilz3/myelinconnect/subjects.csv')
 subjects=list(subjects['DB'])
 subjects.remove('KSMT')
 
-smooths=['raw'] #,'raw', '3']
+smooths=['2'] #,'raw', '3']
 hemis = ['rh']
 sessions = ['1_1', '1_2' , '2_1', '2_2']
 
 
-#rest_file = '/scr/ilz3/myelinconnect/all_data_on_simple_surf/rest/smooth_%s/%s_%s_rest%s_smooth_%s.npy'
-#thr_corr_file = '/scr/ilz3/myelinconnect/all_data_on_simple_surf/corr/%s_smooth_%s_thr_per_session_corr.hdf5'
-#corr_file = '/scr/ilz3/myelinconnect/all_data_on_simple_surf/corr/%s_smooth_%s_avg_corr.hdf5'
-rest_file = '/scr/ilz3/myelinconnect/all_data_on_simple_surf/rest/%s/%s_%s_rest%s.npy'
-thr_corr_file = '/scr/ilz3/myelinconnect/all_data_on_simple_surf/corr/%s_%s_thr_per_session_corr.hdf5'
-corr_file = '/scr/ilz3/myelinconnect/all_data_on_simple_surf/corr/%s_%s_avg_corr.hdf5'
+rest_file = '/scr/ilz3/myelinconnect/all_data_on_simple_surf/rest/smooth_%s/%s_%s_rest%s_smooth_%s.npy'
+thr_corr_file = '/scr/ilz3/myelinconnect/all_data_on_simple_surf/corr/%s_smooth_%s_thr_per_session_corr.hdf5'
+corr_file = '/scr/ilz3/myelinconnect/all_data_on_simple_surf/corr/%s_smooth_%s_avg_corr.hdf5'
+#rest_file = '/scr/ilz3/myelinconnect/all_data_on_simple_surf/rest/%s/%s_%s_rest%s.npy'
+#thr_corr_file = '/scr/ilz3/myelinconnect/all_data_on_simple_surf/corr/%s_%s_thr_per_session_corr.hdf5'
+#corr_file = '/scr/ilz3/myelinconnect/all_data_on_simple_surf/corr/%s_%s_avg_corr.hdf5'
 
 
 for smooth in smooths: 
@@ -33,8 +33,8 @@ for smooth in smooths:
         print 'hemi '+hemi
     
         # figure out size of the resulting matrix (N_verticesxN_vertices)
-        #get_size = np.load(rest_file%(smooth, subjects[0], hemis[0], sessions[0], smooth)).shape[0]
-        get_size = np.load(rest_file%(smooth, subjects[0], hemis[0], sessions[0])).shape[0]
+        get_size = np.load(rest_file%(smooth, subjects[0], hemis[0], sessions[0], smooth)).shape[0]
+        #get_size = np.load(rest_file%(smooth, subjects[0], hemis[0], sessions[0])).shape[0]
         
         # create empty vector for cross subject average / thresholded
         if np.mod((get_size**2-get_size),2)==0.0:
@@ -54,19 +54,20 @@ for smooth in smooths:
                 print sub, sess
                 
                 # load time series
-                #rest = np.load(rest_file%(smooth, sub, hemi, sess, smooth))
-                rest = np.load(rest_file%(smooth, sub, hemi, sess))
+                rest = np.load(rest_file%(smooth, sub, hemi, sess, smooth))
+                #rest = np.load(rest_file%(smooth, sub, hemi, sess))
                 
                 # calculate correlations matrix
-                corr = hcp_corr.corrcoef_upper(rest)
-                #corr = np.nan_to_num(np.corrcoef(rest))
+                #K = hcp_corr.corrcoef_upper(rest)
+                corr = np.nan_to_num(np.corrcoef(rest))
                 del rest
                 
                 # get upper triangular only
-                # corr = corr[np.triu_indices_from(corr, k=1)]
+                corr = corr[np.triu_indices_from(corr, k=1)]
                 
                 # r-to-z trans and add to avg
-                avg_corr += ne.evaluate('arctanh(corr)')
+                avg_corr += np.arctanh(corr)
+                
     
                 # threshold and add to thresholded avg
                 thr = np.percentile(corr, 90)
@@ -80,7 +81,7 @@ for smooth in smooths:
         
         # transform back to r and divide by number of sessions included
         avg_corr /= count
-        avg_corr = np.nan_to_num(ne.evaluate('arctanh(corr)'))
+        avg_corr = np.nan_to_num(np.tanh(avg_corr))
         
         avg_corr_thr /= count
         
