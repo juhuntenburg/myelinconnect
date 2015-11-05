@@ -45,6 +45,8 @@ def log(log_file, message, logtime=True):
 
 # main function for looping over subject and hemispheres
 def create_mapping((sub, hemi)):
+    
+    print sub, hemi
 
     complex_file = '/scr/ilz3/myelinconnect/struct/surf_%s/orig/mid_surface/%s_%s_mid.vtk'
     simple_file = '/scr/ilz3/myelinconnect/groupavg/indv_space/%s/lowres_%s_d_def.vtk'# version d
@@ -64,20 +66,26 @@ def create_mapping((sub, hemi)):
     # to the simplified group mesh in subject space
     log(log_file, '...finding unique voronoi seeds')
     
-    #voronoi_seed_idx = np.load(seed_file%(sub, hemi))
+    try:
+        voronoi_seed_idx = np.load(seed_file%(sub, hemi))
+        voronoi_seed_coord = complex_v[voronoi_seed_idx]
     
-    voronoi_seed_idx, inaccuracy  = find_voronoi_seeds(simple_v, complex_v)
-    np.save(seed_file%(sub, hemi), voronoi_seed_idx)
-    # find coordinates of those points in the highres mesh
-    voronoi_seed_coord = complex_v[voronoi_seed_idx]
+    except IOError:
+    
+        voronoi_seed_idx, inaccuracy  = find_voronoi_seeds(simple_v, complex_v)
+        np.save(seed_file%(sub, hemi), voronoi_seed_idx)
+        
+        # find coordinates of those points in the highres mesh
+        voronoi_seed_coord = complex_v[voronoi_seed_idx]
+        
+        # double check differences
+        log(log_file, '...checking unique vs nearest mapping')
+        dist = np.linalg.norm((voronoi_seed_coord - simple_v), axis=1)
+        if ((np.mean(dist)-np.mean(inaccuracy[:,0])>0.1)):
+            log(log_file, 'Unique seeds very far from nearest seeds!')
+            return dist
+            sys.exit("Unique seeds very far from nearest seeds %s %s"%(sub,hemi))
 
-    # double check differences
-    log(log_file, '...checking unique vs nearest mapping')
-    dist = np.linalg.norm((voronoi_seed_coord - simple_v), axis=1)
-    if ((np.mean(dist)-np.mean(inaccuracy[:,0])>0.1)):
-        log(log_file, 'Unique seeds very far from nearest seeds!')
-        return dist
-        sys.exit("Unique seeds very far from nearest seeds %s %s"%(sub,hemi))
 
     # convert highres mesh into graph containing edge length
     log(log_file, '...creating graph')
@@ -97,15 +105,20 @@ def create_mapping((sub, hemi)):
 
     return log_file
 
-if __name__ == "__main__":
+
+
+create_mapping(('OL1T','lh'))
+
+#if __name__ == "__main__":
 
     #cachedir = '/scr/ilz3/myelinconnect/working_dir/complex_to_simple/'
     #memory = Memory(cachedir=cachedir)
     
-    subjects = pd.read_csv('/scr/ilz3/myelinconnect/subjects.csv')
-    subjects=list(subjects['DB'])
-    subjects.remove('KSMT')
-    hemis = ['lh', 'rh']
+    #subjects = pd.read_csv('/scr/ilz3/myelinconnect/subjects.csv')
+    #subjects=list(subjects['DB'])
+    #subjects.remove('KSMT')
+    #hemis = ['lh']
+    
 
-    Parallel(n_jobs=16)(delayed(create_mapping)(i) 
-                               for i in tupler(subjects, hemis))
+    #Parallel(n_jobs=16)(delayed(create_mapping)(i) 
+    #                           for i in tupler(subjects, hemis))

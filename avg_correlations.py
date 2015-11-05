@@ -11,13 +11,13 @@ subjects = pd.read_csv('/scr/ilz3/myelinconnect/subjects.csv')
 subjects=list(subjects['DB'])
 subjects.remove('KSMT')
 
-smooths=['2'] #,'raw', '3']
+smooths=['2'] #,'2', '3']
 hemis = ['rh']
 sessions = ['1_1', '1_2' , '2_1', '2_2']
 
 
 rest_file = '/scr/ilz3/myelinconnect/all_data_on_simple_surf/rest/smooth_%s/%s_%s_rest%s_smooth_%s.npy'
-thr_corr_file = '/scr/ilz3/myelinconnect/all_data_on_simple_surf/corr/%s_smooth_%s_thr_per_session_corr.hdf5'
+#thr_corr_file = '/scr/ilz3/myelinconnect/all_data_on_simple_surf/corr/%s_smooth_%s_thr_per_session_corr.hdf5'
 corr_file = '/scr/ilz3/myelinconnect/all_data_on_simple_surf/corr/%s_smooth_%s_avg_corr.hdf5'
 #rest_file = '/scr/ilz3/myelinconnect/all_data_on_simple_surf/rest/%s/%s_%s_rest%s.npy'
 #thr_corr_file = '/scr/ilz3/myelinconnect/all_data_on_simple_surf/corr/%s_%s_thr_per_session_corr.hdf5'
@@ -39,7 +39,7 @@ for smooth in smooths:
         # create empty vector for cross subject average / thresholded
         if np.mod((get_size**2-get_size),2)==0.0:
             avg_corr = np.zeros((get_size**2-get_size)/2)
-            avg_corr_thr = np.zeros((get_size**2-get_size)/2)
+            #avg_corr_thr = np.zeros((get_size**2-get_size)/2)
         
         else:
             print 'size calculation no zero mod'
@@ -69,8 +69,8 @@ for smooth in smooths:
                 avg_corr += ne.evaluate('arctanh(corr)')
     
                 # threshold and add to thresholded avg
-                thr = np.percentile(corr, 90)
-                avg_corr_thr[np.where(corr>thr)] += 1
+                #thr = np.percentile(corr, 90)
+                #avg_corr_thr[np.where(corr>thr)] += 1
 
                 del corr
                 
@@ -82,19 +82,20 @@ for smooth in smooths:
         avg_corr /= count
         avg_corr = np.nan_to_num(ne.evaluate('tanh(avg_corr)'))
         
-        avg_corr_thr /= count
+        #avg_corr_thr /= count
         
         # save upper triangular correlation matrix as hdf5
+        print 'saving'
         f = h5py.File(corr_file%(hemi, smooth), 'w')
         f.create_dataset('upper', data=avg_corr)
         f.create_dataset('shape', data=(get_size, get_size))
         f.close()
         
-        f_thr = h5py.File(thr_corr_file%(hemi, smooth), 'w')
-        f_thr.create_dataset('upper', data=avg_corr_thr)
-        f_thr.create_dataset('shape', data=(get_size, get_size))
-        f_thr.close()      
+        #f_thr = h5py.File(thr_corr_file%(hemi, smooth), 'w')
+        #f_thr.create_dataset('upper', data=avg_corr_thr)
+        #f_thr.create_dataset('shape', data=(get_size, get_size))
+        #f_thr.close()      
         
         
         del avg_corr
-        del avg_corr_thr  
+        #del avg_corr_thr  
