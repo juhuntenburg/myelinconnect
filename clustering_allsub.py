@@ -35,12 +35,12 @@ functions
 '''
 
 #def runEmbed(data, n_components):
-#    lambdas, vectors = eigsh(data, k=n_components)   
-#    lambdas = lambdas[::-1]  
-#    vectors = vectors[:, ::-1]  
-#    psi = vectors/vectors[:, 0][:, None]  
-#    lambdas = lambdas[1:] / (1 - lambdas[1:])  
-#    embedding = psi[:, 1:(n_components + 1)] * lambdas[:n_components][None, :]  
+#    lambdas, vectors = eigsh(data, k=n_components)
+#    lambdas = lambdas[::-1]
+#    vectors = vectors[:, ::-1]
+#    psi = vectors/vectors[:, 0][:, None]
+#    lambdas = lambdas[1:] / (1 - lambdas[1:])
+#    embedding = psi[:, 1:(n_components + 1)] * lambdas[:n_components][None, :]
     #embedding_sorted = np.argsort(embedding[:], axis=1)
 #    return embedding
 
@@ -66,58 +66,62 @@ running
 '''
 
 for hemi in hemis:
-        
+
     for kclust in kclusts:
-    
+
         print hemi, kclust
-        
+
         n_components_embedding=embed
         n_components_kmeans=kclust
-         
+
         print 'reading corr data'
         f = h5py.File(corr_file%(hemi, smooth), 'r')
         corr = np.zeros((f['shape']))
         corr[np.triu_indices_from(corr, k=1)] = np.nan_to_num(np.asarray(f['upper']))
         corr += corr.T
         all_vertex=range(corr.shape[0])
-        
+
         print 'masking'
         mask = np.loadtxt(mask_file%(hemi))[:,0]
         masked_corr = np.delete(corr, mask, 0)
         masked_corr = np.delete(masked_corr, mask, 1)
         del corr
         cortex=np.delete(all_vertex, mask)
-        
-        
+
+
         try:
             np.loadtxt(embed_file%(smooth, hemi, str(n_components_embedding)))
-            
-        except IOError: 
-            
+
+        except IOError:
+
             print 'running embedding'
-            K = (masked_corr + 1) / 2.  
-            del masked_corr
-            v = np.sqrt(np.sum(K, axis=1)) 
-            A = K/(v[:, None] * v[None, :])  
-            del K
-            del v
-            A = np.squeeze(A * [A > 0])
+            K = (masked_corr + 1) / 2.
+            # del diagonal again?
+            K[np.where(np.eye(K.shape[0])==1)]=0.0
+
+            #del masked_corr
+            #v = np.sqrt(np.sum(K, axis=1))
+            #A = K/(v[:, None] * v[None, :])
+            #del K
+            #del v
+            #A = np.squeeze(A * [A > 0])
             #embedding_results = runEmbed(A, n_components_embedding)
-            embedding_results = compute_diffusion_map(A, n_components=10)
-        
-            embedding_recort=np.zeros((len(all_vertex),embedding_results.shape[1])) 
+            embedding_results = compute_diffusion_map(K, n_components=10,
+                                                      overwrite=True)
+
+            embedding_recort=np.zeros((len(all_vertex),embedding_results.shape[1]))
             for e in range(embedding_results.shape[1]):
-                embedding_recort[:,e]=recort(len(all_vertex), 
+                embedding_recort[:,e]=recort(len(all_vertex),
                                              embedding_results[:,e], cortex, 0)
-            np.savetxt(embed_file%(smooth, hemi, str(n_components_embedding)), 
+            np.savetxt(embed_file%(smooth, hemi, str(n_components_embedding)),
                        embedding_recort, delimiter=",")
-        
+
         print 'running kmeans'
         kmeans_results = runKmeans(embedding_results, n_components_kmeans)
         kmeans_recort = recort(len(all_vertex), kmeans_results, cortex, 1)
-        np.savetxt(kmeans_file%(smooth, hemi, str(n_components_kmeans), 
-                                str(n_components_embedding)), 
+        np.savetxt(kmeans_file%(smooth, hemi, str(n_components_kmeans),
+                                str(n_components_embedding)),
                    kmeans_recort, delimiter=",")
-      
-        
+
+
         print 'done'
