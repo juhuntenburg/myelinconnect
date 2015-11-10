@@ -1,7 +1,7 @@
 from __future__ import division
 import numpy as np
 from vtk_rw import read_vtk, write_vtk
-from simplification import sample_simple
+from simplification import sample_simple, sample_volume
 from joblib import Memory, Parallel, delayed
 import nibabel as nb
 import pandas as pd
@@ -26,14 +26,8 @@ def looping((sub, hemi, sess)):
     labels = np.load(label_file)[:,1]
     highres_v, highres_f, highres_d = read_vtk(highres_file)
     
-    img = nb.load(rest_file)
-    affine = img.get_affine()
-    rest = img.get_data()
-    
-    # for each vertex in the highres mesh find voxel it maps to
-    dim = -(np.round([affine[0,0], affine[1,1], affine[2,2]], 1))
-    idx = np.asarray(np.round(highres_v/dim), dtype='int64')
-    rest_highres = rest[idx[:,0],idx[:,1],idx[:,2]]
+    # sample resting state time series on highres mesh
+    rest_highres = sample_volume(rest_file, highres_v)
     
     # average across highres vertices that map to the same lowres vertex
     rest_lowres = sample_simple(rest_highres, labels)

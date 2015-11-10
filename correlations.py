@@ -1,6 +1,5 @@
 def avg_correlation(ts_files, thr=None):
 
-    from __future__ import division
     import numpy as np
     import numexpr as ne
     import hcp_corr
