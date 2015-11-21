@@ -3,7 +3,7 @@ import numpy as np
 import numexpr as ne
 import pandas as pd
 from correlations import avg_correlation
-from clustering import embedding, kmeans
+from clustering import t1embedding, kmeans
 import h5py
 import pickle
 
@@ -65,13 +65,16 @@ for smooth in smooths:
                     full_shape = tuple(f['shape'])
                     f.close()
     
-                #mask = np.load(mask_file%(hemi, masktype))
-                #embedding_recort, embedding_dict = embedding(t1_diff, full_shape, mask, n_embedding)
+                mask = np.load(mask_file%(hemi, masktype))
+                
+                t1_diff=1-(t1_diff/t1_diff.max())
+                
+                embedding_recort, embedding_dict = t1embedding(t1_diff, full_shape, mask, n_embedding)
     
-                #np.save(embed_file%(smooth, masktype, hemi, str(n_embedding)),embedding_recort, layer)
-                #pkl_out = open(embed_dict_file%(smooth, masktype, hemi, str(n_embedding), layer), 'wb')
-                #pickle.dump(embedding_dict, pkl_out)
-                #pkl_out.close()
+                np.save(embed_file%(smooth, masktype, hemi, str(n_embedding)),embedding_recort, layer)
+                pkl_out = open(embed_dict_file%(smooth, masktype, hemi, str(n_embedding), layer), 'wb')
+                pickle.dump(embedding_dict, pkl_out)
+                pkl_out.close()
                 
     
 #             '''clustering'''
