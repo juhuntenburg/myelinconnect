@@ -13,16 +13,15 @@ smooths=['smooth_3'] #, 'raw', 'smooth_2']
 hemis = ['rh'] #, 'lh']
 masktype = '02_4'
 n_embedding = 10
+layers = ['3_7']
 #n_kmeans = range(2,21)
 
 calc_euclid = False
 calc_embed = True
 calc_cluster = False
-layers = ['3_7']
 
-mesh_file = '/scr/ilz3/myelinconnect/all_data_on_simple_surf/surfs/lowres_%s_d.vtk'%hemi
-mask_file = '/scr/ilz3/myelinconnect/all_data_on_simple_surf/masks/%s_fullmask_%.npy'%(hemi, masktype)
-t1_file = '/scr/ilz3/myelinconnect/all_data_on_simple_surf/t1/avg_%s_profiles.npy'%(hemi)
+mask_file = '/scr/ilz3/myelinconnect/all_data_on_simple_surf/masks/%s_fullmask_%s.npy'
+t1_file = '/scr/ilz3/myelinconnect/all_data_on_simple_surf/t1/avg_%s_profiles.npy'
 
 euclid_file = '/scr/ilz3/myelinconnect/all_data_on_simple_surf/t1/%s_euclidian_dist_%s.hdf5'
 embed_file="/scr/ilz3/myelinconnect/all_data_on_simple_surf/clust/%s/mask_%s/t1_embed/%s_t1embed_%s_layer_%s.npy"
@@ -41,7 +40,7 @@ for smooth in smooths:
             '''euclidian distance'''
             if calc_euclid:
                 print 'calculating euclidian distances'
-                t1=np.load(t1_file)
+                t1=np.load(t1_file%hemi)
                 full_shape=tuple((t1.shape[0], t1.shape[0]))
                 t1_diff = sp.spatial.distance.pdist(t1[:,int(layer[0]):(int(layer[-1])+1)], 'euclidean')
              
@@ -66,13 +65,13 @@ for smooth in smooths:
                     full_shape = tuple(f['shape'])
                     f.close()
     
-                mask = np.load(mask_file%(hemi, masktype))
-                embedding_recort, embedding_dict = embedding(t1_diff, full_shape, mask, n_embedding)
+                #mask = np.load(mask_file%(hemi, masktype))
+                #embedding_recort, embedding_dict = embedding(t1_diff, full_shape, mask, n_embedding)
     
-                np.save(embed_file%(smooth, masktype, hemi, str(n_embedding)),embedding_recort, layer)
-                pkl_out = open(embed_dict_file%(smooth, masktype, hemi, str(n_embedding), layer), 'wb')
-                pickle.dump(embedding_dict, pkl_out)
-                pkl_out.close()
+                #np.save(embed_file%(smooth, masktype, hemi, str(n_embedding)),embedding_recort, layer)
+                #pkl_out = open(embed_dict_file%(smooth, masktype, hemi, str(n_embedding), layer), 'wb')
+                #pickle.dump(embedding_dict, pkl_out)
+                #pkl_out.close()
                 
     
 #             '''clustering'''
