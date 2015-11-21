@@ -42,7 +42,7 @@ def embedding(upper_corr, full_shape, mask, n_components):
     for e in range(embedding_results.shape[1]):
         embedding_recort[:,e]=recort(len(all_vertex), embedding_results[:,e], cortex, 0)
 
-    return embedding_recort
+    return embedding_recort, embedding_dict
 
 def kmeans(embedding,n_components, mask):
     import numpy as np

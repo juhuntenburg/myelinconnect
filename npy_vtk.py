@@ -13,7 +13,7 @@ sessions = ['1_1', '1_2', '2_1', '2_2']
 
 mesh_file = '/scr/ilz3/myelinconnect/all_data_on_simple_surf/surfs/lowres_%s_d.vtk'
 data_file = '/scr/ilz3/myelinconnect/all_data_on_simple_surf/rest/smooth_3/%s_%s_rest%s_smooth_3.npy'
-vtk_data_file = '/scr/ilz3/myelinconnect/all_data_on_simple_surf/rest/smooth_3/%s_%s_rest%s_smoothdata.vtk'
+vtk_data_file = '/scr/ilz3/myelinconnect/all_data_on_simple_surf/rest/smooth_3/%s_%s_rest%s_raw_smoothdata.vtk'
 
 mode = 'vtk2npy'
 

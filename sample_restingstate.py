@@ -18,9 +18,9 @@ def looping((sub, hemi, sess)):
 
     label_file = '/scr/ilz3/myelinconnect/all_data_on_simple_surf/labels/%s_%s_highres2lowres_labels.npy'%(sub, hemi)
     rest_file = '/scr/ilz3/myelinconnect/resting/final/%s_rest%s_denoised.nii.gz'%(sub, sess)
-    highres_file = '/scr/ilz3/myelinconnect/struct/surf_%s/orig2func/%s_%s_mid_groupavgsurf.vtk'%(hemi, sub, hemi)
+    highres_file = '/scr/ilz3/myelinconnect/struct/surf_%s/orig2func/rest%s/%s_%s_mid_groupavgsurf.vtk'%(hemi, sess, sub, hemi)
         
-    data_file = '/scr/ilz3/myelinconnect/all_data_on_simple_surf/rest/%s_%s_rest%s.npy'%(sub, hemi, sess)
+    data_file = '/scr/ilz3/myelinconnect/all_data_on_simple_surf/rest/raw/%s_%s_rest%s_raw.npy'%(sub, hemi, sess)
 
     # load data
     labels = np.load(label_file)[:,1]
@@ -46,7 +46,6 @@ if __name__ == "__main__":
     subjects = pd.read_csv('/scr/ilz3/myelinconnect/subjects.csv')
     subjects=list(subjects['DB'])
     subjects.remove('KSMT')
-
 
     hemis = ['rh']
     sessions = ['1_1', '1_2', '2_1', '2_2']
