@@ -65,6 +65,7 @@ def t1embedding(upper_corr, full_shape, mask, n_components):
 
     # run actual embedding
     print '...embed'
+    K=1-(masked_corr/masked_corr.max())
     #K = (masked_corr + 1) / 2.
     del masked_corr
     K[np.where(np.eye(K.shape[0])==1)]=1.0

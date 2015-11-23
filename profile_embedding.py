@@ -66,12 +66,9 @@ for smooth in smooths:
                     f.close()
     
                 mask = np.load(mask_file%(hemi, masktype))
-                
-                t1_diff=1-(t1_diff/t1_diff.max())
-                
                 embedding_recort, embedding_dict = t1embedding(t1_diff, full_shape, mask, n_embedding)
     
-                np.save(embed_file%(smooth, masktype, hemi, str(n_embedding)),embedding_recort, layer)
+                np.save(embed_file%(smooth, masktype, hemi, str(n_embedding), layer),embedding_recort)
                 pkl_out = open(embed_dict_file%(smooth, masktype, hemi, str(n_embedding), layer), 'wb')
                 pickle.dump(embedding_dict, pkl_out)
                 pkl_out.close()
