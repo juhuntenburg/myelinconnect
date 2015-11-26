@@ -129,7 +129,7 @@ def subcluster(kmeans, triangles):
             # and start new subcluster from first node in remaining cluster list
             subclust['k'+str(c)].append(neighbours)
     
-    # make array with original kmeans clusters and subclusters        
+    # make array with  subclusters        
     subclust_full = np.zeros((kmeans.shape[0], int(kmeans.max()+1)))
     count = 0
     for c in range(len(subclust.keys())):
@@ -138,10 +138,3 @@ def subcluster(kmeans, triangles):
                 subclust_full[j][c] = i+1
     #subclust_arr=np.hstack((np.reshape(kmeans, (kmeans.shape[0],1)), subclust_full))
     return subclust_full
-
-
-
-def adjacent_cluster(subcluster, edges):
-    
-    
-    

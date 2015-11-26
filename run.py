@@ -4,6 +4,7 @@ import numexpr as ne
 import pandas as pd
 from correlations import avg_correlation
 from clustering import embedding, kmeans, subcluster
+from graphs import subcluster_graph
 from vtk_rw import read_vtk
 import h5py
 import pickle
@@ -19,10 +20,10 @@ subjects = ['BP4T']
 smooths=['smooth_3'] #, 'raw', 'smooth_2']
 hemis = ['rh'] #, 'lh']
 sessions = ['1_1', '1_2' , '2_1', '2_2']
-masktype = '025_5'
+masktype = '02_4'
 n_embedding = 10
-#n_kmeans = range(2,21)
-n_kmeans = [5,10,15]
+n_kmeans = range(2,21)
+#n_kmeans = [5,10,15]
 
 calc_corr = False
 calc_embed = False
@@ -98,22 +99,15 @@ for smooth in smooths:
                 kmeans_recort = kmeans(embedding_recort, nk, mask)
                 np.save(kmeans_file%(smooth, masktype, hemi, str(n_embedding), str(nk)),
                         kmeans_recort)
-                
-                if calc_subcluster:
-                    print 'subclustering %s'%str(nk)
-                    verts, faces, data = read_vtk(mesh_file%hemi)
-                    subclust_arr=subcluster(kmeans_recort, faces)
-                    np.save(subclust_file%(smooth, masktype, hemi, str(n_embedding), str(nk)), subclust_arr)   
                         
 
         '''subclustering'''
-        if not calc_cluster:
-            if calc_subcluster:
+        if calc_subcluster:
                 
-                verts, faces, data = read_vtk(mesh_file%hemi)
-                
-                for nk in n_kmeans:
-                    print 'subclustering %s'%str(nk)
-                    kmeans_recort = np.load(kmeans_file%(smooth, masktype, hemi, str(n_embedding), str(nk)))
-                    subclust_arr=subcluster(kmeans_recort, faces)
-                    np.save(subclust_file%(smooth, masktype, hemi, str(n_embedding), str(nk)), subclust_arr)  
+            verts, faces, data = read_vtk(mesh_file%hemi)
+            
+            for nk in n_kmeans:
+                print 'subclustering %s'%str(nk)
+                kmeans_recort = np.load(kmeans_file%(smooth, masktype, hemi, str(n_embedding), str(nk)))
+                subclust_arr=subcluster_graph(verts, faces, kmeans_recort)
+                np.save(subclust_file%(smooth, masktype, hemi, str(n_embedding), str(nk)), subclust_arr)  
