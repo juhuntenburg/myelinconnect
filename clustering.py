@@ -103,11 +103,11 @@ def subcluster(kmeans, triangles):
     
     import numpy as np
     # make a dictionary for kmeans clusters and subclusters
-    clust_subclust={}
+    subclust={}
     # loop through all kmeans clusters (and the mask cluster with value zero)
     for c in range(int(kmeans.max()+1)):
         # add dic entry
-        clust_subclust['k'+str(c)]=[]
+        subclust['k'+str(c)]=[]
         # extract all nodes of the cluster
         clust=list(np.where(kmeans==c)[0])
         # while not all nodes have been removed from the cluster
@@ -127,27 +127,21 @@ def subcluster(kmeans, triangles):
                         [clust.remove(x) for x in n if x in clust]
             # when no new neighbours can be found, add subcluster to subcluster list 
             # and start new subcluster from first node in remaining cluster list
-            clust_subclust['k'+str(c)].append(neighbours)
+            subclust['k'+str(c)].append(neighbours)
     
     # make array with original kmeans clusters and subclusters        
     subclust_full = np.zeros((kmeans.shape[0], int(kmeans.max()+1)))
     count = 0
-    for c in range(len(clust_subclust.keys())):
-        for i in range(len(clust_subclust['k'+str(c)])):
-            for j in clust_subclust['k'+str(c)][i]:
+    for c in range(len(subclust.keys())):
+        for i in range(len(subclust['k'+str(c)])):
+            for j in subclust['k'+str(c)][i]:
                 subclust_full[j][c] = i+1
-    subclust_arr=np.hstack((np.reshape(kmeans, (kmeans.shape[0],1)), subclust_full))
+    #subclust_arr=np.hstack((np.reshape(kmeans, (kmeans.shape[0],1)), subclust_full))
+    return subclust_full
+
+
+
+def adjacent_cluster(subcluster, edges):
     
-    return subclust_arr
-
-
-#def runEmbed(data, n_components):
-#    from sklearn.utils.arpack import eigsh
-#    lambdas, vectors = eigsh(data, k=n_components)
-#    lambdas = lambdas[::-1]
-#    vectors = vectors[:, ::-1]
-#    psi = vectors/vectors[:, 0][:, None]
-#    lambdas = lambdas[1:] / (1 - lambdas[1:])
-#    embedding = psi[:, 1:(n_components + 1)] * lambdas[:n_components][None, :]
-    #embedding_sorted = np.argsort(embedding[:], axis=1)
-#    return embedding
+    
+    

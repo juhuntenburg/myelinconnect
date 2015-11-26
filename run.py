@@ -19,10 +19,10 @@ subjects = ['BP4T']
 smooths=['smooth_3'] #, 'raw', 'smooth_2']
 hemis = ['rh'] #, 'lh']
 sessions = ['1_1', '1_2' , '2_1', '2_2']
-masktype = '02_4'
+masktype = '025_5'
 n_embedding = 10
-n_kmeans = range(2,21)
-n_kmeans = [5]
+#n_kmeans = range(2,21)
+n_kmeans = [5,10,15]
 
 calc_corr = False
 calc_embed = False
@@ -42,6 +42,8 @@ subclust_file="/scr/ilz3/myelinconnect/all_data_on_simple_surf/clust/%s/mask_%s/
 
 for smooth in smooths:
     print 'smooth '+smooth
+    
+    print 'mask '+masktype
 
     for hemi in hemis:
         print 'hemi '+hemi
@@ -99,22 +101,19 @@ for smooth in smooths:
                 
                 if calc_subcluster:
                     print 'subclustering %s'%str(nk)
-                    v, f, d = read_vtk(mesh_file%hemi)
-                    subclust_arr=subcluster(kmeans_recort, f)
-                    np.save(subclust_file%(smooth, masktype, hemi, str(n_embedding), str(nk)), subclust_arr)  
-                     
+                    verts, faces, data = read_vtk(mesh_file%hemi)
+                    subclust_arr=subcluster(kmeans_recort, faces)
+                    np.save(subclust_file%(smooth, masktype, hemi, str(n_embedding), str(nk)), subclust_arr)   
                         
 
         '''subclustering'''
         if not calc_cluster:
             if calc_subcluster:
                 
-                v, f, d = read_vtk(mesh_file%hemi)
+                verts, faces, data = read_vtk(mesh_file%hemi)
                 
                 for nk in n_kmeans:
                     print 'subclustering %s'%str(nk)
                     kmeans_recort = np.load(kmeans_file%(smooth, masktype, hemi, str(n_embedding), str(nk)))
-                    subclust_arr=subcluster(kmeans_recort, f)
+                    subclust_arr=subcluster(kmeans_recort, faces)
                     np.save(subclust_file%(smooth, masktype, hemi, str(n_embedding), str(nk)), subclust_arr)  
-                        
-                
