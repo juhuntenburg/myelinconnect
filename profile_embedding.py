@@ -1,86 +1,117 @@
 from __future__ import division
 import numpy as np
-import numexpr as ne
-import pandas as pd
-from correlations import avg_correlation
-from clustering import t1embedding, kmeans
+import scipy as sp
 import h5py
+import hcp_corr
+from vtk_rw import read_vtk, write_vtk
+from clustering import embedding
 import pickle
+from mapalign import dist
 
-ne.set_num_threads(ne.ncores-2)
-
-smooths=['smooth_3'] #, 'raw', 'smooth_2']
-hemis = ['rh'] #, 'lh']
-masktype = '02_4'
+hemi='rh'
+masktype='025_5'
 n_embedding = 10
-layers = ['3_7']
-#n_kmeans = range(2,21)
 
-calc_euclid = False
-calc_embed = True
-calc_cluster = False
-
+mesh_file = '/scr/ilz3/myelinconnect/all_data_on_simple_surf/surfs/lowres_%s_d.vtk'%hemi
 mask_file = '/scr/ilz3/myelinconnect/all_data_on_simple_surf/masks/%s_fullmask_%s.npy'
-t1_file = '/scr/ilz3/myelinconnect/all_data_on_simple_surf/t1/avg_%s_profiles.npy'
+t1_file = '/scr/ilz3/myelinconnect/all_data_on_simple_surf/t1/avg_%s_profiles.npy'%(hemi)
+euclid_file = '/scr/ilz3/myelinconnect/all_data_on_simple_surf/t1/profile_embedding/%s_euclidian_dist_%s.hdf5'
+corr_file = '/scr/ilz3/myelinconnect/all_data_on_simple_surf/t1/profile_embedding/%s_profile_corr_%s.hdf5'
+embed_file = '/scr/ilz3/myelinconnect/all_data_on_simple_surf/t1/profile_embedding/%s_mask_%s_%s_%s.npy'
+embed_dict_file = '/scr/ilz3/myelinconnect/all_data_on_simple_surf/t1/profile_embedding/%s_mask_%s_%s_%s_dict.pkl'
 
-euclid_file = '/scr/ilz3/myelinconnect/all_data_on_simple_surf/t1/%s_euclidian_dist_%s.hdf5'
-embed_file="/scr/ilz3/myelinconnect/all_data_on_simple_surf/clust/%s/mask_%s/t1_embed/%s_t1embed_%s_layer_%s.npy"
-embed_dict_file="/scr/ilz3/myelinconnect/all_data_on_simple_surf/clust/%s/mask_%s/t1_embed/%s_t1embed_%s_layer_%s_dict.pkl"
-#kmeans_file="/scr/ilz3/myelinconnect/all_data_on_simple_surf/clust/%s/mask_%s/%s_embed_%s_kmeans_%s.npy"
+v, f, d = read_vtk(mesh_file)
+t1=np.load(t1_file)
+full_shape=tuple((t1.shape[0], t1.shape[0]))
 
 
-for smooth in smooths:
-    print 'smooth '+smooth
+euclid = False
+corr = False
+embed_corr = False
+embed_euclid = True
 
-    for hemi in hemis:
-        print 'hemi '+hemi
+if euclid:
+    print 'euclid'
+    t1_3_7_diff = sp.spatial.distance.pdist(t1[:,3:8], 'euclidean')
+    f = h5py.File(euclid_file%('rh', '3_7'), 'w')
+    f.create_dataset('upper', data=t1_3_7_diff)
+    f.create_dataset('shape', data=full_shape)
+    f.close()
+    del t1_3_7_diff
+    
+#     t1_2_8_diff = sp.spatial.distance.pdist(t1[:,2:9], 'euclidean')
+#     f = h5py.File(euclid_file%('rh', '2_8'), 'w')
+#     f.create_dataset('upper', data=t1_2_8_diff)
+#     f.create_dataset('shape', data=full_shape)
+#     f.close()
+#     del t1_2_8_diff
+    
+    
+if corr:
+    print 'corr'
+    t1_3_7_corr = hcp_corr.corrcoef_upper(t1[:,3:8])
+    f = h5py.File(corr_file%('rh', '3_7'), 'w')
+    f.create_dataset('upper', data=t1_3_7_corr)
+    f.create_dataset('shape', data=full_shape)
+    f.close()
+    #del t1_3_7_corr
+
+
+if embed_corr:
+    
+    print 'embedding'
+    
+    if not corr:
+        # load upper triangular avg correlation matrix
+        f = h5py.File(corr_file%('rh', '3_7'), 'r')
+        upper_corr = np.asarray(f['upper'])
+        full_shape = tuple(f['shape'])
+        f.close()
+    else:
+        upper_corr = t1_3_7_corr
+
+    mask = np.load(mask_file%(hemi, masktype))
+    embedding_recort, embedding_dict = embedding(upper_corr, full_shape, mask, n_embedding)
+
+    np.save(embed_file%(hemi, masktype, 'corr_embed', str(n_embedding)),embedding_recort)
+    pkl_out = open(embed_dict_file%(hemi, masktype, 'corr_embed', str(n_embedding)), 'wb')
+    pickle.dump(embedding_dict, pkl_out)
+    pkl_out.close()
+    
+
+
+if embed_euclid:
+    
+    print 'loading'
+    
+    if not euclid:
+        # load upper triangular avg correlation matrix
+        f = h5py.File(euclid_file%('rh', '3_7'), 'r')
+        upper_diff = np.asarray(f['upper'])
+        full_shape = tuple(f['shape'])
+        f.close()
+    else:
+        upper_diff = t1_3_7_diff
         
-        for layer in layers:
+    full_diff = np.zeros(tuple(full_shape))
+    full_diff[np.triu_indices_from(full_diff, k=1)] = np.nan_to_num(upper_diff)
+    full_diff += full_diff.T
+    
+    print 'normalizing'
+    full_diff_norm = dist.compute_affinity(full_diff)
+    #del full_diff
+    upper_diff_norm = full_diff_norm[np.triu_indices_from(full_diff_norm, k=1)]
+    #del full_diff_norm
+    
+    print 'embedding'
+    mask = np.load(mask_file%(hemi, masktype))
+    embedding_recort, embedding_dict = embedding(upper_diff_norm, full_shape, mask, n_embedding)
 
-            '''euclidian distance'''
-            if calc_euclid:
-                print 'calculating euclidian distances'
-                t1=np.load(t1_file%hemi)
-                full_shape=tuple((t1.shape[0], t1.shape[0]))
-                t1_diff = sp.spatial.distance.pdist(t1[:,int(layer[0]):(int(layer[-1])+1)], 'euclidean')
-             
-                print 'saving matrix'
-                f = h5py.File(euclid_file%(hemi, layer), 'w')
-                f.create_dataset('upper', data=t1_diff)
-                f.create_dataset('shape', data=full_shape)
-                f.close()
+    np.save(embed_file%(hemi, masktype, 'euclid_embed', str(n_embedding)),embedding_recort)
+    pkl_out = open(embed_dict_file%(hemi, masktype, 'euclid_embed', str(n_embedding)), 'wb')
+    pickle.dump(embedding_dict, pkl_out)
+    pkl_out.close()
     
-                if (not calc_embed and not calc_cluster):
-                    del t1_diff
-    
-            '''embedding'''
-            if calc_embed:
-                print 'embedding'
-    
-                if not calc_euclid:
-                    print '...load'
-                    # load upper triangular avg correlation matrix
-                    f = h5py.File(euclid_file%(hemi, layer), 'r')
-                    t1_diff = np.asarray(f['upper'])
-                    full_shape = tuple(f['shape'])
-                    f.close()
-    
-                mask = np.load(mask_file%(hemi, masktype))
-                embedding_recort, embedding_dict = t1embedding(t1_diff, full_shape, mask, n_embedding)
-    
-                np.save(embed_file%(smooth, masktype, hemi, str(n_embedding), layer),embedding_recort)
-                pkl_out = open(embed_dict_file%(smooth, masktype, hemi, str(n_embedding), layer), 'wb')
-                pickle.dump(embedding_dict, pkl_out)
-                pkl_out.close()
-                
-    
-#             '''clustering'''
-#             if calc_cluster:
-#                 if not calc_embed:
-#                     embedding_recort = np.load(embed_file%(smooth, masktype, hemi, str(n_embedding), layer))
-#                     mask = np.load(mask_file%(hemi, masktype))
-#                 for nk in n_kmeans:
-#                     print 'clustering %s'%str(nk)
-#                     kmeans_recort = kmeans(embedding_recort, nk, mask)
-#                     np.save(kmeans_file%(smooth, masktype, hemi, str(n_embedding), str(nk)),
-#                             kmeans_recort)
+
+
+
