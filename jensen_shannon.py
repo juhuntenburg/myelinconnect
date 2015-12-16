@@ -35,7 +35,7 @@ def jensenshannon(data, range_min=None, range_max=None, base=2, weights=None):
         range_max = data_maxs[np.argmax(data_maxs)]
     
     data_shapes = [k.shape[0] for k in data]
-    bins = int(np.round(data_shapes[np.argmin(data_shapes)]/100))
+    bins = int(np.round(data_shapes[np.argmin(data_shapes)]/10))
     p_mass = np.zeros((len(data), bins))
     
     combined_data = []
