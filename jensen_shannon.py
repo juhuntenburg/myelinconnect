@@ -10,7 +10,7 @@ def prob_mass_function(data, bins='auto', range_min=None, range_max=None):
         range_max = np.nanmax(data)
         
     if bins == 'auto':
-        bins = data.shape[0]/100
+        bins = data.shape[0]/10
         
     p_mass, x_values = np.histogram(data, bins=bins, range=(range_min, range_max))
     p_mass = p_mass / data.shape[0]
