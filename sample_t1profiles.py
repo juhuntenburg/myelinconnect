@@ -14,13 +14,13 @@ def tupler(subjects, hemis):
 #@memory.cache
 def looping((sub, hemi)):
 
-    highres_file = '/scr/ilz3/myelinconnect/struct/surf_%s/prep_t1/profiles/%s_%s_mid_proflies.vtk'%(hemi, sub, hemi)
+    highres_file = '/scr/ilz3/myelinconnect/struct/surf_%s/prep_t1/profiles/%s_%s_mid_profiles_smooth_3_smoothdata.vtk'%(hemi, sub, hemi)
     label_file = '/scr/ilz3/myelinconnect/all_data_on_simple_surf/labels/%s_%s_highres2lowres_labels.npy'%(sub, hemi)
     old_lowres_file = '/scr/ilz3/myelinconnect/groupavg/indv_space/%s/lowres_%s_d_def.vtk'%(sub, hemi)
 
     
-    new_lowres_file = '/scr/ilz3/myelinconnect/all_data_on_simple_surf/t1/%s_%s_profiles.vtk'%(sub, hemi)
-    data_file = '/scr/ilz3/myelinconnect/all_data_on_simple_surf/t1/%s_%s_profiles.npy'%(sub, hemi)
+    new_lowres_file = '/scr/ilz3/myelinconnect/all_data_on_simple_surf/t1/%s_%s_profiles_smooth_3.vtk'%(sub, hemi)
+    data_file = '/scr/ilz3/myelinconnect/all_data_on_simple_surf/t1/%s_%s_profiles_smooth_3.npy'%(sub, hemi)
 
 
     # load data
@@ -52,10 +52,10 @@ if __name__ == "__main__":
     #cachedir = '/scr/ilz3/working_dir/sample_to_simple/'
     #memory = Memory(cachedir=cachedir, mmap_mode='r')
 
-    Parallel(n_jobs=8)(delayed(looping)(i)
-                           for i in tupler(subjects, hemis))
+    #Parallel(n_jobs=8)(delayed(looping)(i)
+#                           for i in tupler(subjects, hemis))
     
-    #for sub in subjects:
-    #    for hemi in hemis:
-    #        print sub, hemi
-    #        looping((sub, hemi))
+    for sub in subjects:
+        for hemi in hemis:
+            print sub, hemi
+            looping((sub, hemi))

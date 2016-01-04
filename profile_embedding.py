@@ -8,17 +8,31 @@ from clustering import embedding
 import pickle
 from mapalign import dist
 
+
+def chebapprox(profiles, degree):
+    profiles=np.array(profiles)
+    cheb_coeffs=np.zeros((profiles.shape[0],degree+1))
+    cheb_polynoms=np.zeros((profiles.shape[0],profiles.shape[1]))
+    for c in range(profiles.shape[0]):
+        x=np.array(range(profiles.shape[1]))
+        y=profiles[c]
+        cheb_coeffs[c]=np.polynomial.chebyshev.chebfit(x, y, degree)
+        cheb_polynoms[c]=np.polynomial.chebyshev.chebval(x, cheb_coeffs[c])
+    return cheb_coeffs, cheb_polynoms
+
+
 hemi='rh'
 masktype='025_5'
 n_embedding = 10
 
 mesh_file = '/scr/ilz3/myelinconnect/all_data_on_simple_surf/surfs/lowres_%s_d.vtk'%hemi
 mask_file = '/scr/ilz3/myelinconnect/all_data_on_simple_surf/masks/%s_fullmask_%s.npy'
-t1_file = '/scr/ilz3/myelinconnect/all_data_on_simple_surf/t1/avg_%s_profiles.npy'%(hemi)
+t1_file = '/scr/ilz3/myelinconnect/all_data_on_simple_surf/t1/avg_%s_profiles_smooth_3.npy'%(hemi)
 euclid_file = '/scr/ilz3/myelinconnect/all_data_on_simple_surf/t1/profile_embedding/%s_euclidian_dist_%s.hdf5'
 corr_file = '/scr/ilz3/myelinconnect/all_data_on_simple_surf/t1/profile_embedding/%s_profile_corr_%s.hdf5'
-embed_file = '/scr/ilz3/myelinconnect/all_data_on_simple_surf/t1/profile_embedding/%s_mask_%s_%s_%s.npy'
-embed_dict_file = '/scr/ilz3/myelinconnect/all_data_on_simple_surf/t1/profile_embedding/%s_mask_%s_%s_%s_dict.pkl'
+affinity_file = '/scr/ilz3/myelinconnect/all_data_on_simple_surf/t1/profile_embedding/%s_chebychev_affinity_%s_smooth3.hdf5'
+embed_file = '/scr/ilz3/myelinconnect/all_data_on_simple_surf/t1/profile_embedding/%s_mask_%s_%s_%s_smooth3.npy'
+embed_dict_file = '/scr/ilz3/myelinconnect/all_data_on_simple_surf/t1/profile_embedding/%s_mask_%s_%s_%s_smooth3_dict.pkl'
 
 v, f, d = read_vtk(mesh_file)
 t1=np.load(t1_file)
@@ -27,8 +41,11 @@ full_shape=tuple((t1.shape[0], t1.shape[0]))
 
 euclid = False
 corr = False
+affinity = True
 embed_corr = False
-embed_euclid = True
+embed_euclid = False
+embed_affinity = True
+
 
 if euclid:
     print 'euclid'
@@ -55,20 +72,34 @@ if corr:
     f.create_dataset('shape', data=full_shape)
     f.close()
     #del t1_3_7_corr
+    
+if affinity:
+    print 'chebychev'
+    t1_3_7 = t1[:,3:8]
+    coeff, poly = chebapprox(t1_3_7, degree=4)
+    print 'affinity'
+    t1_3_7_affine = dist.compute_affinity(coeff)
+    t1_3_7_affine = t1_3_7_affine[np.triu_indices_from(t1_3_7_affine, k=1)]
+    f = h5py.File(affinity_file%('rh', '3_7'), 'w')
+    f.create_dataset('upper', data=t1_3_7_affine)
+    f.create_dataset('shape', data=full_shape)
+    f.close()
+    #del t1_3_7_
 
 
 if embed_corr:
     
     print 'embedding'
     
-    if not corr:
+    if corr:
+        upper_corr = t1_3_7_corr
+    else:
         # load upper triangular avg correlation matrix
         f = h5py.File(corr_file%('rh', '3_7'), 'r')
         upper_corr = np.asarray(f['upper'])
         full_shape = tuple(f['shape'])
         f.close()
-    else:
-        upper_corr = t1_3_7_corr
+        
 
     mask = np.load(mask_file%(hemi, masktype))
     embedding_recort, embedding_dict = embedding(upper_corr, full_shape, mask, n_embedding)
@@ -113,5 +144,23 @@ if embed_euclid:
     pkl_out.close()
     
 
+if embed_affinity:
+    
+    if not affinity:
+        f = h5py.File(affinity_file%('rh', '3_7'), 'r')
+        upper_affine = np.asarray(f['upper'])
+        full_shape = tuple(f['shape'])
+        f.close()
+    else:
+        upper_affine = t1_3_7_affine.copy()
+        del t1_3_7_affine
+        
+    
+    mask = np.load(mask_file%(hemi, masktype))
+    embedding_recort, embedding_dict = embedding(upper_affine, full_shape, mask, n_embedding)
 
+    np.save(embed_file%(hemi, masktype, 'affine_embed', str(n_embedding)),embedding_recort)
+    pkl_out = open(embed_dict_file%(hemi, masktype, 'affine_embed', str(n_embedding)), 'wb')
+    pickle.dump(embedding_dict, pkl_out)
+    pkl_out.close()
 
