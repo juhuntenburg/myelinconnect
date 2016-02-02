@@ -4,6 +4,7 @@ apptools                  4.2.1                    py27_0    defaults
 backports-abc             0.4                       <pip>
 backports.ssl-match-hostname 3.4.0.2                   <pip>
 backports_abc             0.4                      py27_0    defaults
+bintrees                  2.0.4                     <pip>
 cairo                     1.12.18                       6    defaults
 configobj                 5.0.6                    py27_0    defaults
 decorator                 4.0.6                    py27_0    defaults
@@ -15,6 +16,7 @@ ipython                   4.0.3                    py27_0    defaults
 ipython-genutils          0.1.0                     <pip>
 ipython_genutils          0.1.0                    py27_0    defaults
 jinja2                    2.8                      py27_0    defaults
+joblib                    0.8.4                    py27_0    defaults
 jsonschema                2.4.0                    py27_0    defaults
 jupyter-client            4.1.1                     <pip>
 jupyter-core              4.0.6                     <pip>
@@ -30,16 +32,17 @@ mayavi                    4.4.0                np19py27_0    defaults
 mistune                   0.7.1                    py27_0    defaults
 nbconvert                 4.1.0                    py27_0    defaults
 nbformat                  4.0.1                    py27_0    defaults
+networkx                  1.6                       <pip>
 nose                      1.3.7                    py27_0    defaults
 notebook                  4.1.0                    py27_0    defaults
 numpy                     1.9.3                    py27_0    defaults
 openblas                  0.2.14                        3    defaults
-openssl                   1.0.2e                        0    defaults
+openssl                   1.0.2f                        0    defaults
 pandas                    0.16.2               np19py27_0    defaults
 path.py                   8.1.2                    py27_1    defaults
 pexpect                   3.3                      py27_0    defaults
 pickleshare               0.5                      py27_0    defaults
-pip                       8.0.1                    py27_0    defaults
+pip                       8.0.2                    py27_0    defaults
 pixman                    0.32.6                        0    defaults
 ptyprocess                0.5                      py27_0    defaults
 py2cairo                  1.10.0                   py27_2    defaults
@@ -56,7 +59,7 @@ readline                  6.2                           2    defaults
 scikit-learn              0.16.1               np19py27_0    defaults
 scipy                     0.16.0               np19py27_1    defaults
 seaborn                   0.7.0                    py27_0    defaults
-setuptools                19.4                     py27_0    defaults
+setuptools                19.6.2                   py27_0    defaults
 simplegeneric             0.8.1                    py27_0    defaults
 singledispatch            3.4.0.3                  py27_0    defaults
 sip                       4.16.9                   py27_0    defaults
