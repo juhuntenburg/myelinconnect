@@ -11,12 +11,13 @@ from vtk_rw import read_vtk, write_vtk
 subjects = pd.read_csv('/scr/ilz3/myelinconnect/subjects.csv')
 subjects=list(subjects['DB'])
 subjects.remove('KSMT')
+subjects=['GAET']
 hemis = ['lh', 'rh']
 modes = ['',' ideal']
 
-csv_file = '/scr/ilz3/myelinconnect/all_data_on_simple_surf/qa/qa.csv'
-edge_file = '/scr/ilz3/myelinconnect/all_data_on_simple_surf/qa/%s_%s_edge_label.vtk'
-no_file = '/scr/ilz3/myelinconnect/all_data_on_simple_surf/qa/%s_%s_no_label.vtk'
+csv_file = '/scr/ilz3/myelinconnect/all_data_on_simple_surf/qa/qa_fixed.csv'
+edge_file = '/scr/ilz3/myelinconnect/all_data_on_simple_surf/qa/fixed/%s_%s_edge_label.vtk'
+no_file = '/scr/ilz3/myelinconnect/all_data_on_simple_surf/qa/fixed/%s_%s_no_label.vtk'
 
 columns = [sub+' '+hemi+mode for sub in subjects for hemi in hemis for mode in modes]
 df = pd.DataFrame(columns=columns, index=['seeds min',
@@ -33,7 +34,7 @@ df = pd.DataFrame(columns=columns, index=['seeds min',
 for sub in subjects:
     for hemi in hemis:
 
-        if os.path.isfile('/scr/ilz3/myelinconnect/all_data_on_simple_surf/labels/%s_%s_highres2lowres_labels.npy'%(sub, hemi)):
+        if os.path.isfile('/scr/ilz3/myelinconnect/all_data_on_simple_surf/labels_fixed/%s_%s_highres2lowres_labels.npy'%(sub, hemi)):
             
             print 'processing '+sub+' '+hemi
             

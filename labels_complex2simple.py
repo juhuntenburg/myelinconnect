@@ -12,6 +12,7 @@ from bintrees import FastAVLTree, FastBinaryTree
 from vtk_rw import read_vtk, write_vtk
 from graphs import graph_from_mesh
 from simplification import add_neighbours, find_voronoi_seeds, competetive_fast_marching
+from utils import log, tupler
 import pdb
 
 
@@ -27,21 +28,7 @@ Binary search trees: https://en.wikipedia.org/wiki/Binary_search_tree
 Balanced binary trees: https://en.wikipedia.org/wiki/AVL_tree,
 Using them as heaps: http://samueldotj.com/blog/?s=binary+tree
 Implementation used: https://pypi.python.org/pypi/bintrees/2.0.2 (cython version)
-'''
-
-# function returning generator for sub,hemi tuples fro joblib
-def tupler(subjects, hemis):
-    for s in subjects:
-        for h in hemis:
-            yield (s, h)
-
-# function to write time and message to log file
-def log(log_file, message, logtime=True):
-    with open(log_file, 'a') as f:
-        if logtime:
-            f.write(time.ctime()+'\n')
-        f.write(message+'\n')
-    
+'''    
 
 # main function for looping over subject and hemispheres
 def create_mapping((sub, hemi)):
@@ -51,10 +38,10 @@ def create_mapping((sub, hemi)):
     complex_file = '/scr/ilz3/myelinconnect/struct/surf_%s/orig/mid_surface/%s_%s_mid.vtk'
     simple_file = '/scr/ilz3/myelinconnect/groupavg/indv_space/%s/lowres_%s_d_def.vtk'# version d
     
-    log_file = '/scr/ilz3/myelinconnect/all_data_on_simple_surf/labels/logs/log_worker_%s.txt'%(str(os.getpid()))
-    seed_file = '/scr/ilz3/myelinconnect/all_data_on_simple_surf/seeds/%s_%s_highres2lowres_seeds.npy'
-    label_file = '/scr/ilz3/myelinconnect/all_data_on_simple_surf/labels/%s_%s_highres2lowres_labels.npy'
-    surf_label_file = '/scr/ilz3/myelinconnect/all_data_on_simple_surf/labels/%s_%s_highres2lowres_labels.vtk'
+    log_file = '/scr/ilz3/myelinconnect/all_data_on_simple_surf/labels_fixed/logs/log_worker_%s.txt'%(str(os.getpid()))
+    seed_file = '/scr/ilz3/myelinconnect/all_data_on_simple_surf/seeds_fixed/%s_%s_highres2lowres_seeds.npy'
+    label_file = '/scr/ilz3/myelinconnect/all_data_on_simple_surf/labels_fixed/%s_%s_highres2lowres_labels.npy'
+    surf_label_file = '/scr/ilz3/myelinconnect/all_data_on_simple_surf/labels_fixed/%s_%s_highres2lowres_labels.vtk'
 
     # load the meshes
     log(log_file, 'Processing %s %s'%(sub, hemi))
@@ -72,7 +59,11 @@ def create_mapping((sub, hemi)):
     
     except IOError:
     
-        voronoi_seed_idx, inaccuracy  = find_voronoi_seeds(simple_v, complex_v)
+        voronoi_seed_idx, inaccuracy, log_file  = find_voronoi_seeds(simple_v, 
+                                                                     simple_f, 
+                                                                     complex_v, 
+                                                                     complex_f,
+                                                           log_file = log_file)
         np.save(seed_file%(sub, hemi), voronoi_seed_idx)
         
         # find coordinates of those points in the highres mesh
@@ -88,37 +79,37 @@ def create_mapping((sub, hemi)):
 
 
     # convert highres mesh into graph containing edge length
-    log(log_file, '...creating graph')
-    complex_graph = graph_from_mesh(complex_v, complex_f, edge_length=True)
+    #log(log_file, '...creating graph')
+    #complex_graph = graph_from_mesh(complex_v, complex_f, edge_length=True)
 
     # find the actual labels
-    log(log_file, '...competetive fast marching')
-    labels = competetive_fast_marching(complex_v, complex_graph, voronoi_seed_idx)
+    #log(log_file, '...competetive fast marching')
+    #labels = competetive_fast_marching(complex_v, complex_graph, voronoi_seed_idx)
 
     # write out labelling file and surface with labels
-    log(log_file, '...saving data')
-    np.save(label_file%(sub, hemi), labels)
-    write_vtk(surf_label_file%(sub, hemi), complex_v, complex_f,
-                data=labels[:,1, np.newaxis])
+    #log(log_file, '...saving data')
+    #np.save(label_file%(sub, hemi), labels)
+    #write_vtk(surf_label_file%(sub, hemi), complex_v, complex_f,
+    #            data=labels[:,1, np.newaxis])
 
-    log(log_file, 'Finished %s %s'%(sub, hemi))
+    #log(log_file, 'Finished %s %s'%(sub, hemi))
 
     return log_file
 
 
 
-create_mapping(('OL1T','lh'))
+#create_mapping(('BP4T','rh'))
 
-#if __name__ == "__main__":
+if __name__ == "__main__":
 
     #cachedir = '/scr/ilz3/myelinconnect/working_dir/complex_to_simple/'
     #memory = Memory(cachedir=cachedir)
     
-    #subjects = pd.read_csv('/scr/ilz3/myelinconnect/subjects.csv')
-    #subjects=list(subjects['DB'])
-    #subjects.remove('KSMT')
-    #hemis = ['lh']
+    subjects = pd.read_csv('/scr/ilz3/myelinconnect/subjects.csv')
+    subjects=list(subjects['DB'])
+    subjects.remove('KSMT')
+    hemis = ['rh']
     
 
-    #Parallel(n_jobs=16)(delayed(create_mapping)(i) 
-    #                           for i in tupler(subjects, hemis))
+    Parallel(n_jobs=8)(delayed(create_mapping)(i) 
+                               for i in tupler(subjects, hemis))
