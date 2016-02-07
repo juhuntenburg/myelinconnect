@@ -11,11 +11,10 @@ from vtk_rw import read_vtk, write_vtk
 subjects = pd.read_csv('/scr/ilz3/myelinconnect/subjects.csv')
 subjects=list(subjects['DB'])
 subjects.remove('KSMT')
-subjects=['GAET']
 hemis = ['lh', 'rh']
 modes = ['',' ideal']
 
-csv_file = '/scr/ilz3/myelinconnect/all_data_on_simple_surf/qa/qa_fixed.csv'
+csv_file = '/scr/ilz3/myelinconnect/all_data_on_simple_surf/qa/fixed/qa_fixed.csv'
 edge_file = '/scr/ilz3/myelinconnect/all_data_on_simple_surf/qa/fixed/%s_%s_edge_label.vtk'
 no_file = '/scr/ilz3/myelinconnect/all_data_on_simple_surf/qa/fixed/%s_%s_no_label.vtk'
 
@@ -41,8 +40,8 @@ for sub in subjects:
             # load data
             complex_v,complex_f, complex_d = read_vtk('/scr/ilz3/myelinconnect/struct/surf_%s/orig/mid_surface/%s_%s_mid.vtk'%(hemi, sub, hemi))
             simple_v, simple_f, simple_d = read_vtk('/scr/ilz3/myelinconnect/groupavg/indv_space/%s/lowres_%s_d_def.vtk'%(sub, hemi))
-            labelling=np.load('/scr/ilz3/myelinconnect/all_data_on_simple_surf/labels/%s_%s_highres2lowres_labels.npy'%(sub, hemi))
-            seeds=np.load('/scr/ilz3/myelinconnect/all_data_on_simple_surf/seeds/%s_%s_highres2lowres_seeds.npy'%(sub, hemi))
+            labelling=np.load('/scr/ilz3/myelinconnect/all_data_on_simple_surf/labels_fixed/%s_%s_highres2lowres_labels.npy'%(sub, hemi))
+            seeds=np.load('/scr/ilz3/myelinconnect/all_data_on_simple_surf/seeds_fixed/%s_%s_highres2lowres_seeds.npy'%(sub, hemi))
 
             # make an edge label surface and save it
             G = graph_from_mesh(complex_v, complex_f)
