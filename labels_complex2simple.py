@@ -38,10 +38,10 @@ def create_mapping((sub, hemi)):
     complex_file = '/scr/ilz3/myelinconnect/struct/surf_%s/orig/mid_surface/%s_%s_mid.vtk'
     simple_file = '/scr/ilz3/myelinconnect/groupavg/indv_space/%s/lowres_%s_d_def.vtk'# version d
     
-    log_file = '/scr/ilz3/myelinconnect/all_data_on_simple_surf/labels_fixed/logs/log_worker_%s.txt'%(str(os.getpid()))
-    seed_file = '/scr/ilz3/myelinconnect/all_data_on_simple_surf/seeds_fixed/%s_%s_highres2lowres_seeds.npy'
-    label_file = '/scr/ilz3/myelinconnect/all_data_on_simple_surf/labels_fixed/%s_%s_highres2lowres_labels.npy'
-    surf_label_file = '/scr/ilz3/myelinconnect/all_data_on_simple_surf/labels_fixed/%s_%s_highres2lowres_labels.vtk'
+    log_file = '/scr/ilz3/myelinconnect/all_data_on_simple_surf/labels_ideal/logs/log_worker_%s.txt'%(str(os.getpid()))
+    seed_file = '/scr/ilz3/myelinconnect/all_data_on_simple_surf/seeds_ideal/%s_%s_highres2lowres_seeds.npy'
+    label_file = '/scr/ilz3/myelinconnect/all_data_on_simple_surf/labels_ideal/%s_%s_highres2lowres_labels.npy'
+    surf_label_file = '/scr/ilz3/myelinconnect/all_data_on_simple_surf/labels_ideal/%s_%s_highres2lowres_labels.vtk'
 
     # load the meshes
     log(log_file, 'Processing %s %s'%(sub, hemi))
@@ -73,26 +73,23 @@ def create_mapping((sub, hemi)):
         log(log_file, '...checking unique vs nearest mapping')
         dist = np.linalg.norm((voronoi_seed_coord - simple_v), axis=1)
         if ((np.mean(dist)-np.mean(inaccuracy[:,0])>0.1)):
-            log(log_file, 'Unique seeds very far from nearest seeds!')
-            return dist
-            sys.exit("Unique seeds very far from nearest seeds %s %s"%(sub,hemi))
-
+            log(log_file, 'Unique seeds very far from nearest seeds! %f'%(np.mean(dist)-np.mean(inaccuracy[:,0])))
 
     # convert highres mesh into graph containing edge length
-    #log(log_file, '...creating graph')
-    #complex_graph = graph_from_mesh(complex_v, complex_f, edge_length=True)
+    log(log_file, '...creating graph')
+    complex_graph = graph_from_mesh(complex_v, complex_f, edge_length=True)
 
     # find the actual labels
-    #log(log_file, '...competetive fast marching')
-    #labels = competetive_fast_marching(complex_v, complex_graph, voronoi_seed_idx)
+    log(log_file, '...competetive fast marching')
+    labels = competetive_fast_marching(complex_v, complex_graph, voronoi_seed_idx)
 
     # write out labelling file and surface with labels
-    #log(log_file, '...saving data')
-    #np.save(label_file%(sub, hemi), labels)
-    #write_vtk(surf_label_file%(sub, hemi), complex_v, complex_f,
-    #            data=labels[:,1, np.newaxis])
+    log(log_file, '...saving data')
+    np.save(label_file%(sub, hemi), labels)
+    write_vtk(surf_label_file%(sub, hemi), complex_v, complex_f,
+                data=labels[:,1, np.newaxis])
 
-    #log(log_file, 'Finished %s %s'%(sub, hemi))
+    log(log_file, 'Finished %s %s'%(sub, hemi))
 
     return log_file
 
@@ -108,8 +105,8 @@ if __name__ == "__main__":
     subjects = pd.read_csv('/scr/ilz3/myelinconnect/subjects.csv')
     subjects=list(subjects['DB'])
     subjects.remove('KSMT')
-    hemis = ['rh']
+    hemis = ['rh', 'lh']
     
 
-    Parallel(n_jobs=8)(delayed(create_mapping)(i) 
+    Parallel(n_jobs=16)(delayed(create_mapping)(i) 
                                for i in tupler(subjects, hemis))
