@@ -15,12 +15,13 @@ def tupler(subjects, hemis, sessions):
 
 #@memory.cache
 def looping((sub, hemi, sess)):
-
-    label_file = '/scr/ilz3/myelinconnect/all_data_on_simple_surf/labels/%s_%s_highres2lowres_labels.npy'%(sub, hemi)
+    
+    print 'running', sub, hemi, sess
+    label_file = '/scr/ilz3/myelinconnect/all_data_on_simple_surf/labels_fixed/%s_%s_highres2lowres_labels.npy'%(sub, hemi)
     rest_file = '/scr/ilz3/myelinconnect/resting/final/%s_rest%s_denoised.nii.gz'%(sub, sess)
     highres_file = '/scr/ilz3/myelinconnect/struct/surf_%s/orig2func/rest%s/%s_%s_mid_groupavgsurf.vtk'%(hemi, sess, sub, hemi)
         
-    data_file = '/scr/ilz3/myelinconnect/all_data_on_simple_surf/rest/raw/%s_%s_rest%s_raw.npy'%(sub, hemi, sess)
+    data_file = '/scr/ilz3/myelinconnect/all_data_on_simple_surf/rest/%s_%s_rest%s_smooth_3.npy'%(sub, hemi, sess)
 
     # load data
     labels = np.load(label_file)[:,1]
@@ -47,11 +48,11 @@ if __name__ == "__main__":
     subjects=list(subjects['DB'])
     subjects.remove('KSMT')
 
-    hemis = ['rh']
+    hemis = ['rh', 'lh']
     sessions = ['1_1', '1_2', '2_1', '2_2']
 
     #cachedir = '/scr/ilz3/working_dir/sample_to_simple/'
     #memory = Memory(cachedir=cachedir, mmap_mode='r')
 
-    Parallel(n_jobs=16)(delayed(looping)(i)
+    Parallel(n_jobs=8)(delayed(looping)(i)
                            for i in tupler(subjects, hemis, sessions))

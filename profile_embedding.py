@@ -27,12 +27,12 @@ n_embedding = 10
 
 mesh_file = '/scr/ilz3/myelinconnect/all_data_on_simple_surf/surfs/lowres_%s_d.vtk'%hemi
 mask_file = '/scr/ilz3/myelinconnect/all_data_on_simple_surf/masks/%s_fullmask_%s.npy'
-t1_file = '/scr/ilz3/myelinconnect/all_data_on_simple_surf/t1/avg_%s_profiles_smooth_3.npy'%(hemi)
-euclid_file = '/scr/ilz3/myelinconnect/all_data_on_simple_surf/t1/profile_embedding/%s_euclidian_dist_%s.hdf5'
-corr_file = '/scr/ilz3/myelinconnect/all_data_on_simple_surf/t1/profile_embedding/%s_profile_corr_%s.hdf5'
-affinity_file = '/scr/ilz3/myelinconnect/all_data_on_simple_surf/t1/profile_embedding/%s_chebychev_affinity_%s_smooth3.hdf5'
-embed_file = '/scr/ilz3/myelinconnect/all_data_on_simple_surf/t1/profile_embedding/%s_mask_%s_%s_%s_smooth3.npy'
-embed_dict_file = '/scr/ilz3/myelinconnect/all_data_on_simple_surf/t1/profile_embedding/%s_mask_%s_%s_%s_smooth3_dict.pkl'
+t1_file = '/scr/ilz3/myelinconnect/all_data_on_simple_surf/t1/avg_%s_profiles.npy'%(hemi)
+#euclid_file = '/scr/ilz3/myelinconnect/all_data_on_simple_surf/t1/profile_embedding/%s_euclidian_dist_%s.hdf5'
+#corr_file = '/scr/ilz3/myelinconnect/all_data_on_simple_surf/t1/profile_embedding/%s_profile_corr_%s.hdf5'
+affinity_file = '/scr/ilz3/myelinconnect/all_data_on_simple_surf/t1/profile_embedding/%s_chebychev_affinity_%s_cauchy.hdf5'
+embed_file = '/scr/ilz3/myelinconnect/all_data_on_simple_surf/t1/profile_embedding/%s_mask_%s_%s_%s_cauchy.npy'
+embed_dict_file = '/scr/ilz3/myelinconnect/all_data_on_simple_surf/t1/profile_embedding/%s_mask_%s_%s_%s_cauchy_dict.pkl'
 
 v, f, d = read_vtk(mesh_file)
 t1=np.load(t1_file)
@@ -78,7 +78,7 @@ if affinity:
     t1_3_7 = t1[:,3:8]
     coeff, poly = chebapprox(t1_3_7, degree=4)
     print 'affinity'
-    t1_3_7_affine = dist.compute_affinity(coeff)
+    t1_3_7_affine = dist.compute_affinity(coeff, method='cauchy')
     t1_3_7_affine = t1_3_7_affine[np.triu_indices_from(t1_3_7_affine, k=1)]
     f = h5py.File(affinity_file%('rh', '3_7'), 'w')
     f.create_dataset('upper', data=t1_3_7_affine)
