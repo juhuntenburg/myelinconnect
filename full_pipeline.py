@@ -22,7 +22,7 @@ subjects_db=list(df['DB'])
 # subjects=[]
 # for sub in range(len(subjects_db)):
 #     subjects.append(subjects_db[sub]+'_'+subjects_trt[sub])
-
+subjects=['KSYT', 'WSFT']
 # sessions to loop over
 sessions=['rest1_1' ,'rest1_2', 'rest2_1', 'rest2_2']
 
@@ -268,4 +268,6 @@ preproc.connect([(session_infosource, sink, [('session', 'container')]),
                  (motreg, sink, [('out_files', 'confounds.@motreg')])
                  ])
     
-preproc.run(plugin='MultiProc', plugin_args={'n_procs' : 9})
+#preproc.run(plugin='MultiProc', plugin_args={'n_procs' : 9})
+
+preproc.write_graph(dotfilename='func_preproc.dot', graph2use='colored', format='pdf', simple_form=True)

@@ -38,10 +38,10 @@ def create_mapping((sub, hemi)):
     complex_file = '/scr/ilz3/myelinconnect/struct/surf_%s/orig/mid_surface/%s_%s_mid.vtk'
     simple_file = '/scr/ilz3/myelinconnect/groupavg/indv_space/%s/lowres_%s_d_def.vtk'# version d
     
-    log_file = '/scr/ilz3/myelinconnect/all_data_on_simple_surf/labels_ideal/logs/log_worker_%s.txt'%(str(os.getpid()))
-    seed_file = '/scr/ilz3/myelinconnect/all_data_on_simple_surf/seeds_ideal/%s_%s_highres2lowres_seeds.npy'
-    label_file = '/scr/ilz3/myelinconnect/all_data_on_simple_surf/labels_ideal/%s_%s_highres2lowres_labels.npy'
-    surf_label_file = '/scr/ilz3/myelinconnect/all_data_on_simple_surf/labels_ideal/%s_%s_highres2lowres_labels.vtk'
+    log_file = '/scr/ilz3/myelinconnect/all_data_on_simple_surf/labels/logs/log_worker_%s.txt'%(str(os.getpid()))
+    seed_file = '/scr/ilz3/myelinconnect/all_data_on_simple_surf/seeds/%s_%s_highres2lowres_seeds.npy'
+    label_file = '/scr/ilz3/myelinconnect/all_data_on_simple_surf/labels/%s_%s_highres2lowres_labels.npy'
+    surf_label_file = '/scr/ilz3/myelinconnect/all_data_on_simple_surf/labels/%s_%s_highres2lowres_labels.vtk'
 
     # load the meshes
     log(log_file, 'Processing %s %s'%(sub, hemi))

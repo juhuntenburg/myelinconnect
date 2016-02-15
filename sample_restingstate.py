@@ -17,7 +17,7 @@ def tupler(subjects, hemis, sessions):
 def looping((sub, hemi, sess)):
     
     print 'running', sub, hemi, sess
-    label_file = '/scr/ilz3/myelinconnect/all_data_on_simple_surf/labels_fixed/%s_%s_highres2lowres_labels.npy'%(sub, hemi)
+    label_file = '/scr/ilz3/myelinconnect/all_data_on_simple_surf/labels/%s_%s_highres2lowres_labels.npy'%(sub, hemi)
     rest_file = '/scr/ilz3/myelinconnect/resting/final/%s_rest%s_denoised.nii.gz'%(sub, sess)
     highres_file = '/scr/ilz3/myelinconnect/struct/surf_%s/orig2func/rest%s/%s_%s_mid_groupavgsurf.vtk'%(hemi, sess, sub, hemi)
         
