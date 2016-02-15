@@ -7,10 +7,14 @@ backports_abc             0.4                      py27_0    defaults
 bintrees                  2.0.4                     <pip>
 cairo                     1.12.18                       6    defaults
 configobj                 5.0.6                    py27_0    defaults
+cython                    0.23.4                    <pip>
 decorator                 4.0.6                    py27_0    defaults
 envisage                  4.4.0                    py27_1    defaults
 fontconfig                2.11.1                        5    defaults
 freetype                  2.5.5                         0    defaults
+gdist                     1.0.3                     <pip>
+h5py                      2.5.0               np110py27_4    defaults
+hdf5                      1.8.15.1                      2    defaults
 ipykernel                 4.2.2                    py27_0    defaults
 ipython                   4.0.3                    py27_0    defaults
 ipython-genutils          0.1.0                     <pip>
@@ -30,12 +34,15 @@ markupsafe                0.23                     py27_0    defaults
 matplotlib                1.4.3                np19py27_2    defaults
 mayavi                    4.4.0                np19py27_0    defaults
 mistune                   0.7.1                    py27_0    defaults
+mkl                       11.3.1                        0    defaults
 nbconvert                 4.1.0                    py27_0    defaults
 nbformat                  4.0.1                    py27_0    defaults
 networkx                  1.6                       <pip>
+nibabel                   2.0.2                     <pip>
 nose                      1.3.7                    py27_0    defaults
 notebook                  4.1.0                    py27_0    defaults
-numpy                     1.9.3                    py27_0    defaults
+numexpr                   2.5                       <pip>
+numpy                     1.10.4                   py27_0    defaults
 openblas                  0.2.14                        3    defaults
 openssl                   1.0.2f                        0    defaults
 pandas                    0.16.2               np19py27_0    defaults
@@ -44,6 +51,7 @@ pexpect                   3.3                      py27_0    defaults
 pickleshare               0.5                      py27_0    defaults
 pip                       8.0.2                    py27_0    defaults
 pixman                    0.32.6                        0    defaults
+pqdict                    1.0.0                     <pip>
 ptyprocess                0.5                      py27_0    defaults
 py2cairo                  1.10.0                   py27_2    defaults
 pyface                    4.4.0                    py27_0    defaults
