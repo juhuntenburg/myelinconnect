@@ -6,7 +6,7 @@ from vtk_rw import read_vtk
 subjects = pd.read_csv('/scr/ilz3/myelinconnect/subjects.csv')
 subjects=list(subjects['DB'])
 subjects.remove('KSMT')
-hemis = ['rh'] #, 'lh']
+hemis = ['rh', 'lh']
 sessions = ['1_1', '1_2' , '2_1', '2_2']
 
 tsnr_file = '/scr/ilz3/myelinconnect/resting/preprocessed/%s/rest%s/realignment/corr_%s_rest%s_roi_tsnr.nii.gz'

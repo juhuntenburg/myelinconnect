@@ -30,6 +30,7 @@ mask_file = '/scr/ilz3/myelinconnect/all_data_on_simple_surf/masks/%s_fullmask_%
 t1_file = '/scr/ilz3/myelinconnect/all_data_on_simple_surf/t1/avg_%s_profiles.npy'%(hemi)
 #euclid_file = '/scr/ilz3/myelinconnect/all_data_on_simple_surf/t1/profile_embedding/%s_euclidian_dist_%s.hdf5'
 #corr_file = '/scr/ilz3/myelinconnect/all_data_on_simple_surf/t1/profile_embedding/%s_profile_corr_%s.hdf5'
+
 affinity_file = '/scr/ilz3/myelinconnect/all_data_on_simple_surf/t1/profile_embedding/%s_chebychev_affinity_%s_cauchy.hdf5'
 embed_file = '/scr/ilz3/myelinconnect/all_data_on_simple_surf/t1/profile_embedding/%s_mask_%s_%s_%s_cauchy.npy'
 embed_dict_file = '/scr/ilz3/myelinconnect/all_data_on_simple_surf/t1/profile_embedding/%s_mask_%s_%s_%s_cauchy_dict.pkl'
@@ -44,7 +45,7 @@ corr = False
 affinity = True
 embed_corr = False
 embed_euclid = False
-embed_affinity = True
+embed_affinity = False
 
 
 if euclid:
@@ -84,7 +85,7 @@ if affinity:
     f.create_dataset('upper', data=t1_3_7_affine)
     f.create_dataset('shape', data=full_shape)
     f.close()
-    #del t1_3_7_
+    del t1_3_7_
 
 
 if embed_corr:

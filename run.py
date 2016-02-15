@@ -16,7 +16,7 @@ subjects=list(subjects['DB'])
 subjects.remove('KSMT')
 
 smooths=['smooth_3'] #, 'raw', 'smooth_2']
-hemis = ['rh']#, 'lh']
+hemis = ['rh', 'lh']#, 'lh']
 sessions = ['1_1', '1_2' , '2_1', '2_2']
 masktype = '025_5'
 n_embedding = 10
@@ -28,13 +28,13 @@ calc_embed = False
 calc_cluster = False
 calc_subcluster = False
 
-rest_file = '/scr/ilz3/myelinconnect/all_data_on_simple_surf/rest/%s_%s_rest%s_%s.npy'
+rest_file = '/scr/ilz3/myelinconnect/all_data_on_simple_surf/rest/%s/%s_%s_rest%s_%s.npy'
 #thr_corr_file = '/scr/ilz3/myelinconnect/all_data_on_simple_surf/corr/%s_%s_thr%s_per_session_corr.hdf5'
 corr_file = '/scr/ilz3/myelinconnect/all_data_on_simple_surf/corr/%s_%s_avg_corr.hdf5'
 embed_file="/scr/ilz3/myelinconnect/all_data_on_simple_surf/embed/%s_%s_mask_%s_embed_%s.npy"
 embed_dict_file="/scr/ilz3/myelinconnect/all_data_on_simple_surf/embed/%s_%s_mask_%s_embed_%s_dict.pkl"
 #kmeans_file="/scr/ilz3/myelinconnect/all_data_on_simple_surf/clust/%s/mask_%s/%s_embed_%s_kmeans_%s.npy"
-mask_file="/scr/ilz3/myelinconnect/all_data_on_simple_surf/masks/%s_fullmask_%s.npy"
+#mask_file="/scr/ilz3/myelinconnect/all_data_on_simple_surf/masks/%s_fullmask_%s.npy"
 
 mesh_file="//scr/ilz3/myelinconnect/all_data_on_simple_surf/surfs/lowres_%s_d.vtk"
 #subclust_file="/scr/ilz3/myelinconnect/all_data_on_simple_surf/clust/%s/mask_%s/%s_embed_%s_kmeans_%s_subclust.npy"
@@ -52,7 +52,7 @@ for smooth in smooths:
             ts_files = []
             for sub in subjects:
                 for sess in sessions:
-                    ts_files.append(rest_file%(sub, hemi, sess, smooth))
+                    ts_files.append(rest_file%(smooth, sub, hemi, sess, smooth))
 
             print 'calculating average correlations'
             upper_corr, full_shape = avg_correlation(ts_files)
