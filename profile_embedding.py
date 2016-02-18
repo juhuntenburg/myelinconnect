@@ -43,14 +43,20 @@ for hemi in hemis:
 
         mesh_file = '/scr/ilz3/myelinconnect/all_data_on_simple_surf/surfs/lowres_%s_d.vtk'%hemi
         mask_file = '/scr/ilz3/myelinconnect/all_data_on_simple_surf/masks/%s_fullmask.npy'%hemi
-        #t1_file = '/scr/ilz3/myelinconnect/all_data_on_simple_surf/t1/%s/avg_%s_profiles_%s.npy'%(smooth, hemi, smooth)
-        t1_file = '/scr/ilz3/myelinconnect/all_data_on_simple_surf/t1/%s/avg_%s_coeffs_%s.npy'%(smooth, hemi, smooth)
+        t1_file = '/scr/ilz3/myelinconnect/all_data_on_simple_surf/t1/%s/avg_%s_profiles_%s.npy'%(smooth, hemi, smooth)
+        #t1_file = '/scr/ilz3/myelinconnect/all_data_on_simple_surf/t1/%s/avg_%s_coeffs_%s.npy'%(smooth, hemi, smooth)
         #euclid_file = '/scr/ilz3/myelinconnect/all_data_on_simple_surf/t1/profile_embedding/%s_euclidian_dist_%s.hdf5'
         #corr_file = '/scr/ilz3/myelinconnect/all_data_on_simple_surf/t1/profile_embedding/%s_profile_corr_%s.hdf5'
+       
         affinity_file = '/scr/ilz3/myelinconnect/all_data_on_simple_surf/embed/profiles/%s_%s_cheb_affinity_%s.hdf5'%(hemi, smooth, affine_method)
         embed_file = '/scr/ilz3/myelinconnect/all_data_on_simple_surf/embed/profiles/%s_%s_embedding_%s_%s.npy'%(hemi, smooth, str(n_embedding), affine_method)
         embed_dict_file = '/scr/ilz3/myelinconnect/all_data_on_simple_surf/embed/profiles/%s_%s_embedding_dict_%s_%s.pkl'%(hemi, smooth, str(n_embedding), affine_method)
-        
+
+        #affinity_file = '/scr/ilz3/myelinconnect/all_data_on_simple_surf/embed/coefficients/%s_%s_cheb_affinity_%s.hdf5'%(hemi, smooth, affine_method)
+        #embed_file = '/scr/ilz3/myelinconnect/all_data_on_simple_surf/embed/coefficients/%s_%s_embedding_%s_%s.npy'%(hemi, smooth, str(n_embedding), affine_method)
+        #embed_dict_file = '/scr/ilz3/myelinconnect/all_data_on_simple_surf/embed/coefficients/%s_%s_embedding_dict_%s_%s.pkl'%(hemi, smooth, str(n_embedding), affine_method)
+ 
+      
         v, f, d = read_vtk(mesh_file)
         t1=np.load(t1_file)
         full_shape=tuple((t1.shape[0], t1.shape[0]))
@@ -74,14 +80,14 @@ for hemi in hemis:
             f.close()
             
         if affinity:
-            #print 'chebychev'
-            #t1_3_7 = t1[:,3:8]
-            #coeff, poly = chebapprox(t1_3_7, degree=4)
-            coeff = t1.copy()
+            print 'chebychev'
+            t1_3_7 = t1[:,3:8]
+            coeff, poly = chebapprox(t1_3_7, degree=4)
+            #coeff = t1.copy()
             print 'affinity'
             t1_3_7_affine = dist.compute_affinity(coeff, method=affine_method)
             t1_3_7_affine = t1_3_7_affine[np.triu_indices_from(t1_3_7_affine, k=1)]
-            f = h5py.File(affinity_file%(hemi, smooth), 'w')
+            f = h5py.File(affinity_file, 'w')
             f.create_dataset('upper', data=t1_3_7_affine)
             f.create_dataset('shape', data=full_shape)
             f.close()
