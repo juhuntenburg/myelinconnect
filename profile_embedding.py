@@ -56,7 +56,7 @@ for hemi in hemis:
         #embed_file = '/scr/ilz3/myelinconnect/all_data_on_simple_surf/embed/coefficients/%s_%s_embedding_%s_%s.npy'%(hemi, smooth, str(n_embedding), affine_method)
         #embed_dict_file = '/scr/ilz3/myelinconnect/all_data_on_simple_surf/embed/coefficients/%s_%s_embedding_dict_%s_%s.pkl'%(hemi, smooth, str(n_embedding), affine_method)
  
-      
+        print 'loading data'
         v, f, d = read_vtk(mesh_file)
         t1=np.load(t1_file)
         full_shape=tuple((t1.shape[0], t1.shape[0]))
@@ -161,7 +161,7 @@ for hemi in hemis:
                 del t1_3_7_affine
                 
             
-            mask = np.load(mask_file%(hemi))
+            mask = np.load(mask_file)
             embedding_recort, embedding_dict = embedding(upper_affine, full_shape, mask, n_embedding)
         
             np.save(embed_file ,embedding_recort)
