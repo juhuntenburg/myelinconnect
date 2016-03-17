@@ -1,5 +1,6 @@
 import numpy as np
 import pickle
+import h5py
 
 
 corr_file = '/scr/ilz3/myelinconnect/all_data_on_simple_surf/corr/rh_smooth_3_avg_corr.hdf5'
