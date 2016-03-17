@@ -11,7 +11,7 @@ comps = ['pos', 'neg']
 n_embedding = 10
 
 corr_file = '/scr/ilz3/myelinconnect/all_data_on_simple_surf/corr/rh_smooth_3_avg_corr.hdf5'
-mask_files = "/scr/ilz3/myelinconnect/all_data_on_simple_surf/masks/rh_embed0_%s_mask.npy"
+mask_file = "/scr/ilz3/myelinconnect/all_data_on_simple_surf/masks/rh_embed0_%s_mask.npy"
 embed_file="/scr/ilz3/myelinconnect/all_data_on_simple_surf/embed/embed0_compartments/rh_smooth_3_embed0_%s_mask_embed.npy"
 embed_dict_file="/scr/ilz3/myelinconnect/all_data_on_simple_surf/embed/embed0_compartments/rh_smooth_3_embed0_%s_mask_embed_dict.pkl"
 
