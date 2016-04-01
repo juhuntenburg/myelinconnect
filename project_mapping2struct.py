@@ -1,18 +1,10 @@
 import pandas as pd
-from nipype.pipeline.engine import Node, Workflow, MapNode
+from nipype.pipeline.engine import Node, Workflow
 import nipype.interfaces.utility as util
 import nipype.interfaces.io as nio
 import nipype.interfaces.fsl as fsl
-import nipype.interfaces.freesurfer as fs
-import nipype.interfaces.afni as afni
-import nipype.interfaces.nipy as nipy
-import nipype.algorithms.rapidart as ra
-from nipype.algorithms.misc import TSNR
 import nipype.interfaces.ants as ants
-import nilearn.image as nli
-from functions import strip_rois_func, get_info, median, motion_regressors, extract_noise_components, selectindex, fix_hdr
-from linear_coreg import create_coreg_pipeline
-from nonlinear_coreg import create_nonlinear_pipeline
+from nipype.utils.filemanip import split_filename
 
 
 # read in subjects and file names
@@ -78,12 +70,33 @@ mapping2struct.connect([(selectfiles, func2struct, [('mapping', 'input_image'),
                  ])
 
 
+def split_xyz(in_file):
+    import numpy as np
+    import nibabel as nb
+    import os
+    from nipype.utils.filemanip import split_filename
+    nii = nb.load(in_file)
+    x_nii = nb.Nifti1Image(nii.get_data()[:,:,:,0], nii.get_affine(), nii.get_header())
+    y_nii = nb.Nifti1Image(nii.get_data()[:,:,:,1], nii.get_affine(), nii.get_header())
+    z_nii = nb.Nifti1Image(nii.get_data()[:,:,:,2], nii.get_affine(), nii.get_header())
+    x_nii.set_data_dtype(np.float32)
+    y_nii.set_data_dtype(np.float32)
+    z_nii.set_data_dtype(np.float32)
+    _, base, _ = split_filename(in_file)
+    nb.save(x_nii, base + "_x.nii.gz")
+    nb.save(y_nii, base + "_y.nii.gz")
+    nb.save(z_nii, base + "_z.nii.gz")
+    return [os.path.abspath(base + "_x.nii.gz"), 
+            os.path.abspath(base + "_y.nii.gz"),
+            os.path.abspath(base + "_z.nii.gz")]
+
 # split mapping in x,y,z components for sampling to surface
-split = Node(fsl.Split(dimension='t'),
-             name='split')
+split = Node(util.Function(input_names=['in_file'],
+                            output_names=['out_files'],
+                            function=split_xyz),
+                  name='split')
 
 mapping2struct.connect([(func2struct, split, [('output_image', 'in_file')])])
-
   
 # sink relevant files
 final_sink = Node(nio.DataSink(parameterization=False,
