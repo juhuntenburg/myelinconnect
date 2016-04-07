@@ -9,16 +9,14 @@ subjects=list(subjects['DB'])
 subjects.remove('KSMT')
 
 hemis = ['rh', 'lh']
-sessions = ['1_1', '1_2', '2_1', '2_2']
+#sessions = ['1_1', '1_2', '2_1', '2_2']
+sessions = ['2_1']
 
-mesh_file = '/scr/ilz3/myelinconnect/all_data_on_simple_surf/surfs/lowres_%s_d.vtk'
-data_file = '/scr/ilz3/myelinconnect/all_data_on_simple_surf/t1/smooth_3/%s_%s_coeff_smooth_3.npy'
-vtk_data_file = '/scr/ilz3/myelinconnect/all_data_on_simple_surf/t1/smooth_3/%s_%s_coeff_raw_smoothdata.vtk'
+mesh_file = '/scr/ilz3/myelinconnect/new_groupavg/surfs/lowres/%s_lowres_new.vtk'
+data_file = '/scr/ilz3/myelinconnect/new_groupavg/rest/raw/%s_%s_rest%s.npy'
+vtk_data_file = '/scr/ilz3/myelinconnect/new_groupavg/rest/raw/%s_%s_rest%s.vtk'
 
-#data_file = '/scr/ilz3/myelinconnect/all_data_on_simple_surf/t1/raw/%s_%s_profiles.npy'
-#vtk_data_file = '/scr/ilz3/myelinconnect/all_data_on_simple_surf/t1/raw/%s_%s_profiles_raw.vtk'
-
-mode = 'vtk2npy'
+mode = 'npy2vtk'
 
 if mode == 'npy2vtk' :
     

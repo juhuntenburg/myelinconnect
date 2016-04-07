@@ -28,17 +28,12 @@ calc_embed = True
 calc_cluster = False
 calc_subcluster = False
 
-rest_file = '/scr/ilz3/myelinconnect/all_data_on_simple_surf/rest/%s/%s_%s_rest%s_%s.npy'
-#thr_corr_file = '/scr/ilz3/myelinconnect/all_data_on_simple_surf/corr/%s_%s_thr%s_per_session_corr.hdf5'
-corr_file = '/scr/ilz3/myelinconnect/all_data_on_simple_surf/corr/%s_%s_avg_corr.hdf5'
-embed_file="/scr/ilz3/myelinconnect/all_data_on_simple_surf/embed/%s_%s_embed_%s.npy"
-embed_dict_file="/scr/ilz3/myelinconnect/all_data_on_simple_surf/embed/%s_%s_embed_%s_dict.pkl"
-#kmeans_file="/scr/ilz3/myelinconnect/all_data_on_simple_surf/clust/%s/%s_embed_%s_kmeans_%s.npy"
-#mask_file="/scr/ilz3/myelinconnect/all_data_on_simple_surf/masks/%s_fullmask_%s.npy"
-mask_file="/scr/ilz3/myelinconnect/all_data_on_simple_surf/masks/%s_fullmask.npy"
-
-mesh_file="//scr/ilz3/myelinconnect/all_data_on_simple_surf/surfs/lowres_%s_d.vtk"
-#subclust_file="/scr/ilz3/myelinconnect/all_data_on_simple_surf/clust/%s/mask_%s/%s_embed_%s_kmeans_%s_subclust.npy"
+rest_file = '/scr/ilz3/myelinconnect/new_groupavg/rest/%s/%s_%s_rest%s_%s.npy'
+corr_file = '/scr/ilz3/myelinconnect/new_groupavg/corr/%s_%s_avg_corr.hdf5'
+embed_file="/scr/ilz3/myelinconnect/new_groupavg/embed/%s_%s_embed_%s.npy"
+embed_dict_file="/scr/ilz3/myelinconnect/new_groupavg/embed/%s_%s_embed_%s_dict.pkl"
+mask_file="/scr/ilz3/myelinconnect/new_groupavg/masks/%s_fullmask.npy"
+mesh_file="/scr/ilz3/myelinconnect/new_groupavg/surfs/lowres/lowres_%s_new.vtk"
 
 for smooth in smooths:
     print 'smooth '+smooth
