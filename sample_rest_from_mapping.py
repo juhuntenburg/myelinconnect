@@ -12,7 +12,7 @@ subjects.remove('KSMT')
 
 hemis = ['rh', 'lh']
 #sessions = ['1_1', '1_2', '2_1', '2_2']
-sessions = ['2_1']
+sessions = ['2_2']
 
 for hemi in hemis:
     for sess in sessions:

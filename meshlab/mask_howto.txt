@@ -2,13 +2,13 @@
 
 # save surfaces as ply (e.g. paraview)
 
-# inflate using meshlab script smooth.mlx (Taubin Smooth with 10 steps)
-meshlabserver -i lowres_lh_d.ply -o lowres_lh_d_infl.ply -s inflate.mlx
+# inflate using meshlab script smooth.mlx (Laplacian Smooth with 10 steps)
+meshlabserver -i lh_lowres_new.ply -o lh_lowres_new_infl10.ply -s laplacian_smooth_10.mlx
 
 # start suma
 AFNI
-quickspec -tn PLY lowres_lh_d_infl.ply -spec lh_infl.spec
-suma -spec lh_infl.spec
+quickspec -tn PLY lh_lowres_new_infl10.ply -spec lh_infl10.spec
+suma -spec lh_infl10.spec
 
 # make surface one colour
 View -> Object controller -> raise the threshold to max

@@ -6,7 +6,7 @@ import h5py
 corr_file = '/scr/ilz3/myelinconnect/all_data_on_simple_surf/corr/rh_smooth_3_avg_corr.hdf5'
 windows_file = '/scr/ilz3/myelinconnect/all_data_on_simple_surf/path/windows_longpath3_rad4.pkl'
 # see notebook path_embedding_initial
-corr_dict_file = '/scr/ilz3/myelinconnect/all_data_on_simple_surf/path/newcorr_windows_longpath3_rad4.pkl'
+corr_dict_file = '/scr/ilz3/myelinconnect/new_groupavg/corr/rh_smooth_3_motor_corr.pkl'
 
 
 f = h5py.File(corr_file, 'r')

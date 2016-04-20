@@ -9,14 +9,14 @@ from vtk_rw import read_vtk
 import h5py
 import pickle
 
-ne.set_num_threads(ne.ncores-2)
+ne.set_num_threads(ne.ncores-1)
 
 subjects = pd.read_csv('/scr/ilz3/myelinconnect/subjects.csv')
 subjects=list(subjects['DB'])
 subjects.remove('KSMT')
 
 smooths=['smooth_3'] #, 'raw', 'smooth_2']
-hemis = ['rh', 'lh']#, 'lh']
+hemis = ['lh']
 sessions = ['1_1', '1_2' , '2_1', '2_2']
 #masktype = '025_5'
 n_embedding = 10
@@ -30,10 +30,10 @@ calc_subcluster = False
 
 rest_file = '/scr/ilz3/myelinconnect/new_groupavg/rest/%s/%s_%s_rest%s_%s.npy'
 corr_file = '/scr/ilz3/myelinconnect/new_groupavg/corr/%s_%s_avg_corr.hdf5'
-embed_file="/scr/ilz3/myelinconnect/new_groupavg/embed/%s_%s_embed_%s.npy"
-embed_dict_file="/scr/ilz3/myelinconnect/new_groupavg/embed/%s_%s_embed_%s_dict.pkl"
+embed_file="/scr/ilz3/myelinconnect/new_groupavg/embed/%s_%s_embed.npy"
+embed_dict_file="/scr/ilz3/myelinconnect/new_groupavg/embed/%s_%s_embed_dict.pkl"
 mask_file="/scr/ilz3/myelinconnect/new_groupavg/masks/%s_fullmask.npy"
-mesh_file="/scr/ilz3/myelinconnect/new_groupavg/surfs/lowres/lowres_%s_new.vtk"
+mesh_file="/scr/ilz3/myelinconnect/new_groupavg/surfs/lowres/%s_lowres_new.vtk"
 
 for smooth in smooths:
     print 'smooth '+smooth
@@ -75,8 +75,8 @@ for smooth in smooths:
             mask = np.load(mask_file%(hemi))
             embedding_recort, embedding_dict = embedding(upper_corr, full_shape, mask, n_embedding)
 
-            np.save(embed_file%(hemi, smooth, str(n_embedding)),embedding_recort)
-            pkl_out = open(embed_dict_file%(hemi, smooth, str(n_embedding)), 'wb')
+            np.save(embed_file%(hemi, smooth),embedding_recort)
+            pkl_out = open(embed_dict_file%(hemi, smooth), 'wb')
             pickle.dump(embedding_dict, pkl_out)
             pkl_out.close()
             

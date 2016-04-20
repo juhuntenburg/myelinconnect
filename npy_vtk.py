@@ -9,14 +9,13 @@ subjects=list(subjects['DB'])
 subjects.remove('KSMT')
 
 hemis = ['rh', 'lh']
-#sessions = ['1_1', '1_2', '2_1', '2_2']
-sessions = ['2_1']
+sessions = ['1_1', '1_2', '2_1', '2_2']
 
 mesh_file = '/scr/ilz3/myelinconnect/new_groupavg/surfs/lowres/%s_lowres_new.vtk'
-data_file = '/scr/ilz3/myelinconnect/new_groupavg/rest/raw/%s_%s_rest%s.npy'
-vtk_data_file = '/scr/ilz3/myelinconnect/new_groupavg/rest/raw/%s_%s_rest%s.vtk'
+data_file = '/scr/ilz3/myelinconnect/new_groupavg/rest/smooth_3/%s_%s_rest%s_smooth_3.npy'
+vtk_data_file = '/scr/ilz3/myelinconnect/new_groupavg/rest/smooth_3/%s_%s_rest%s_smoothdata.vtk'
 
-mode = 'npy2vtk'
+mode = 'vtk2npy'
 
 if mode == 'npy2vtk' :
     
@@ -48,17 +47,17 @@ elif mode == 'vtk2npy':
         
         for sub in subjects: 
             
-                print hemi, sub
+                #print hemi, sub
             
-                v,f,d = read_vtk(vtk_data_file%(sub, hemi))
-                np.save(data_file%(sub, hemi), d)
+                #v,f,d = read_vtk(vtk_data_file%(sub, hemi))
+                #np.save(data_file%(sub, hemi), d)
             
-#             for sess in sessions:
-#                 
-#                 print hemi, sub, sess
-#             
-#                 v,f,d = read_vtk(vtk_data_file%(sub, hemi, sess))
-#                 np.save(data_file%(sub, hemi, sess), d)
+            for sess in sessions:
+                 
+                print hemi, sub, sess
+             
+                v,f,d = read_vtk(vtk_data_file%(sub, hemi, sess))
+                np.save(data_file%(sub, hemi, sess), d)
             
 
 
