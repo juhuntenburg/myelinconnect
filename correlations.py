@@ -5,7 +5,11 @@ def avg_correlation(ts_files, thr=None):
     import hcp_corr
 
     # make empty avg corr matrix
-    get_size = np.load(ts_files[0]).shape[0]
+    if type(ts_files[0])==str:
+        get_size = np.load(ts_files[0]).shape[0]
+    elif type(ts_files[0])==np.ndarray:
+        get_size = ts_files[0].shape[0]
+        
     full_shape = (get_size, get_size)
     if np.mod((get_size**2-get_size),2)==0.0:
         avg_corr = np.zeros((get_size**2-get_size)/2)
@@ -13,10 +17,12 @@ def avg_correlation(ts_files, thr=None):
         print 'size calculation no zero mod'
 
     count = 0
-    for ts in ts_files:
+    for rest in ts_files:
         # load time series
-        print '...load %s'%ts
-        rest = np.load(ts)
+        if type(rest)==str:
+            rest = np.load(rest)
+        elif type(rest)==np.ndarray:
+            pass
 
         # calculate correlations matrix
         print '...corrcoef'
