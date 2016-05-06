@@ -22,6 +22,7 @@ for hemi in hemis:
     
     for m in range(len(all_maps)):
         
+        
         maps = all_maps[m]
         maps_str = all_maps_str[m]
             
