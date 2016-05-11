@@ -18,12 +18,12 @@ sessions = ['1_1', '1_2' , '2_1', '2_2']
 n_embedding = 100
 
 rest_file = '/scr/ilz3/myelinconnect/new_groupavg/rest/smooth_3/%s_%s_rest%s_smooth_3.npy'
-mask_file="/scr/ilz3/myelinconnect/new_groupavg/masks/fullmask_lh_rh.npy"
+mask_file="/scr/ilz3/myelinconnect/new_groupavg/masks/fullmask_lh_rh_new.npy"
 corr_file = '/scr/ilz3/myelinconnect/new_groupavg/corr/both_smooth_3_avg_corr.hdf5'
 embed_file="/scr/ilz3/myelinconnect/new_groupavg/embed/both_smooth_3_embed.npy"
 embed_dict_file="/scr/ilz3/myelinconnect/new_groupavg/embed/both_smooth_3_embed_dict.pkl"
 
-calc_corr = True
+calc_corr = False
 calc_embed = True
 
 
