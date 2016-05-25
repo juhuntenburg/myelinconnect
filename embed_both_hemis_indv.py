@@ -14,13 +14,13 @@ subjects=list(subjects['DB'])
 subjects.remove('KSMT')
 
 smooths=['smooth_3'] 
-sessions = ['1_1', '1_2' , '2_1', '2_2']
+sessions = ['1_1', '1_2']# , '2_1', '2_2']
 n_embedding = 100
 
 rest_file = '/scr/ilz3/myelinconnect/new_groupavg/rest/smooth_3/%s_%s_rest%s_smooth_3.npy'
 mask_file="/scr/ilz3/myelinconnect/new_groupavg/masks/fullmask_lh_rh_new.npy"
-embed_file="/scr/ilz3/myelinconnect/new_groupavg/embed/indv/%s_both_smooth_3_embed.npy"
-embed_dict_file="/scr/ilz3/myelinconnect/new_groupavg/embed/indv/%s_both_smooth_3_embed_dict.pkl"
+embed_file="/scr/ilz3/myelinconnect/new_groupavg/embed/indv/%s_sess1_both_smooth_3_embed.npy"
+embed_dict_file="/scr/ilz3/myelinconnect/new_groupavg/embed/indv/%s_sess1_both_smooth_3_embed_dict.pkl"
 
 
 
