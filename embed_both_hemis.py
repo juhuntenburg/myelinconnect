@@ -9,9 +9,9 @@ import pickle
 
 ne.set_num_threads(ne.ncores-1)
 
-subjects = pd.read_csv('/scr/ilz3/myelinconnect/subjects.csv')
-subjects=list(subjects['DB'])
-subjects.remove('KSMT')
+all_subjects = pd.read_csv('/scr/ilz3/myelinconnect/subjects.csv')
+all_subjects=list(all_subjects['DB'])
+all_subjects.remove('KSMT')
 
 smooths=['smooth_3'] #, 'raw', 'smooth_2']
 sessions = ['1_1', '1_2' , '2_1', '2_2']
@@ -23,48 +23,64 @@ corr_file = '/scr/ilz3/myelinconnect/new_groupavg/corr/both_smooth_3_avg_corr.hd
 embed_file="/scr/ilz3/myelinconnect/new_groupavg/embed/both_smooth_3_embed.npy"
 embed_dict_file="/scr/ilz3/myelinconnect/new_groupavg/embed/both_smooth_3_embed_dict.pkl"
 
-calc_corr = False
+calc_corr = True
+save_corr = False
 calc_embed = True
 
+'''
+start leave-one-out embeddings
+'''
+for sub in subjects:
+    subjects=list(subjects_file['DB'])
+    subjects.remove('KSMT')
+    subjects.remove(sub)
+    
+    embed_file="/scr/ilz3/myelinconnect/new_groupavg/embed/leave_one_out/both_smooth_3_wo_%s_embed.npy"%sub
+    embed_dict_file="/scr/ilz3/myelinconnect/new_groupavg/embed/leave_one_out/both_smooth_3_wo_%s_embed_dict.pkl"%sub
 
-'''avg correlations'''
-if calc_corr:
-    ts_files = []
-    for sub in subjects:
-        for sess in sessions:
-            rest_left = np.load(rest_file%(sub, 'lh', sess))
-            rest_right = np.load(rest_file%(sub, 'rh', sess))
-            ts_file = np.concatenate((rest_left, rest_right))
-            ts_files.append(ts_file)
-
-    print 'calculating average correlations'
-    upper_corr, full_shape = avg_correlation(ts_files)
-
-    print 'saving matrix'
-    f = h5py.File(corr_file, 'w')
-    f.create_dataset('upper', data=upper_corr)
-    f.create_dataset('shape', data=full_shape)
-    f.close()
-
-    if (not calc_embed and not calc_cluster):
-        del upper_corr
-
-'''embedding'''
-if calc_embed:
-    print 'embedding'
-
-    if not calc_corr:
-        print '...load'
-        # load upper triangular avg correlation matrix
-        f = h5py.File(corr_file, 'r')
-        upper_corr = np.asarray(f['upper'])
-        full_shape = tuple(f['shape'])
-        f.close()
-
-    mask = np.load(mask_file)
-    embedding_recort, embedding_dict = embedding(upper_corr, full_shape, mask, n_embedding)
-
-    np.save(embed_file,embedding_recort)
-    pkl_out = open(embed_dict_file, 'wb')
-    pickle.dump(embedding_dict, pkl_out)
-    pkl_out.close()
+    '''
+    end leave-one-out embeddings
+    '''
+    
+    '''avg correlations'''
+    if calc_corr:
+        ts_files = []
+        for sub in subjects:
+            for sess in sessions:
+                rest_left = np.load(rest_file%(sub, 'lh', sess))
+                rest_right = np.load(rest_file%(sub, 'rh', sess))
+                ts_file = np.concatenate((rest_left, rest_right))
+                ts_files.append(ts_file)
+    
+        print 'calculating average correlations'
+        upper_corr, full_shape = avg_correlation(ts_files)
+    
+        if save_corr:
+            print 'saving matrix'
+            f = h5py.File(corr_file, 'w')
+            f.create_dataset('upper', data=upper_corr)
+            f.create_dataset('shape', data=full_shape)
+            f.close()
+    
+        if (not calc_embed and not calc_cluster):
+            del upper_corr
+    
+    '''embedding'''
+    if calc_embed:
+        print 'embedding'
+    
+        if not calc_corr:
+            print '...load'
+            # load upper triangular avg correlation matrix
+            f = h5py.File(corr_file, 'r')
+            upper_corr = np.asarray(f['upper'])
+            full_shape = tuple(f['shape'])
+            f.close()
+    
+        mask = np.load(mask_file)
+        embedding_recort, embedding_dict = embedding(upper_corr, full_shape, mask, n_embedding)
+    
+        np.save(embed_file,embedding_recort)
+        pkl_out = open(embed_dict_file, 'wb')
+        pickle.dump(embedding_dict, pkl_out)
+        pkl_out.close()

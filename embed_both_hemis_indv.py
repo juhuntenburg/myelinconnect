@@ -12,15 +12,16 @@ ne.set_num_threads(ne.ncores-1)
 subjects = pd.read_csv('/scr/ilz3/myelinconnect/subjects.csv')
 subjects=list(subjects['DB'])
 subjects.remove('KSMT')
+subjects = ['PL6T', 'SC1T', 'WSFT']
 
 smooths=['smooth_3'] 
-sessions = ['1_1', '1_2']# , '2_1', '2_2']
+sessions = ['2_1', '2_2']
 n_embedding = 100
 
 rest_file = '/scr/ilz3/myelinconnect/new_groupavg/rest/smooth_3/%s_%s_rest%s_smooth_3.npy'
 mask_file="/scr/ilz3/myelinconnect/new_groupavg/masks/fullmask_lh_rh_new.npy"
-embed_file="/scr/ilz3/myelinconnect/new_groupavg/embed/indv/%s_sess1_both_smooth_3_embed.npy"
-embed_dict_file="/scr/ilz3/myelinconnect/new_groupavg/embed/indv/%s_sess1_both_smooth_3_embed_dict.pkl"
+embed_file="/scr/ilz3/myelinconnect/new_groupavg/embed/indv/%s_sess2_both_smooth_3_embed.npy"
+embed_dict_file="/scr/ilz3/myelinconnect/new_groupavg/embed/indv/%s_sess2_both_smooth_3_embed_dict.pkl"
 
 
 
