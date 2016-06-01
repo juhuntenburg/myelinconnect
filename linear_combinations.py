@@ -13,7 +13,7 @@ model_file = '/scr/ilz3/myelinconnect/new_groupavg/model/linear_combination/t1av
 
 
 all_maps = [[0], [0,4,5], range(20)]
-all_maps_str = ['0', 'best']
+all_maps_str = ['0', 'best', 'all']
 
 #v,f,d = read_vtk(mesh_file%hemi)
 t1_left = np.load(t1_file%('lh'))
