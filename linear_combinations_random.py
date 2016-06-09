@@ -19,45 +19,39 @@ def fit_iteration((smooth, iteration)):
     # histogramm matching to original t1
     masked_t1 = hist_match(masked_t1, masked_orig)
 
-    for m in range(len(all_maps)):
-        
-        maps = all_maps[m]
-        maps_str = all_maps_str[m]
-        print maps
+    #for m in range(len(all_maps)):
+    #maps = all_maps[m]
+    #maps_str = all_maps_str[m]
+    #print maps
     
-        clf = linear_model.LinearRegression()
-        clf.fit(masked_embed[:,maps], masked_t1)
-        
-        modelled_fit = clf.predict(masked_embed[:,maps])
-        residuals = masked_t1 - clf.predict(masked_embed[:,maps])
-        
-        # write data back into cortex dimensions to avoid confusion
-        modelled_fit_cortex = np.zeros((t1.shape[0])) 
-        modelled_fit_cortex[nonmask_small]=modelled_fit
-        residuals_cortex = np.zeros((t1.shape[0]))  
-        residuals_cortex[nonmask_small]=residuals
-        t1_cortex = np.zeros((t1.shape[0]))
-        t1_cortex[nonmask_small]=masked_t1
+    clf = linear_model.LinearRegression()
+    clf.fit(masked_embed[:,maps], masked_t1)
     
-        
-        model_dict = dict()
-        model_dict['maps']=maps
-        model_dict['coef']=clf.coef_
-        model_dict['modelled_fit']=modelled_fit_cortex
-        model_dict['residuals']=residuals_cortex
-        model_dict['t1']=t1_cortex
-        model_dict['score'] = clf.score(masked_embed[:,maps], masked_t1)
-        model_dict['corr'] = stats.pearsonr(modelled_fit, masked_t1)
-
-        #print 'coeff', clf.coef_
-        #print 'score',model_dict['score']
-        #print 'corr', model_dict['corr']
-        
-        pkl_out = open(model_file%(smooth, hemi, iteration, maps_str), 'wb')
-        pickle.dump(model_dict, pkl_out)
-        pkl_out.close()
-        
-        return
+    modelled_fit = clf.predict(masked_embed[:,maps])
+    residuals = masked_t1 - clf.predict(masked_embed[:,maps])
+    
+    # write data back into cortex dimensions to avoid confusion
+    modelled_fit_cortex = np.zeros((t1.shape[0])) 
+    modelled_fit_cortex[nonmask_small]=modelled_fit
+    residuals_cortex = np.zeros((t1.shape[0]))  
+    residuals_cortex[nonmask_small]=residuals
+    t1_cortex = np.zeros((t1.shape[0]))
+    t1_cortex[nonmask_small]=masked_t1
+    
+    model_dict = dict()
+    model_dict['maps']=maps
+    model_dict['coef']=clf.coef_
+    model_dict['modelled_fit']=modelled_fit_cortex
+    model_dict['residuals']=residuals_cortex
+    model_dict['t1']=t1_cortex
+    model_dict['score'] = clf.score(masked_embed[:,maps], masked_t1)
+    model_dict['corr'] = stats.pearsonr(modelled_fit, masked_t1)
+    
+    pkl_out = open(model_file%(smooth, hemi, iteration, maps_str), 'wb')
+    pickle.dump(model_dict, pkl_out)
+    pkl_out.close()
+    
+    return
 
 
 if __name__ == "__main__":
@@ -73,9 +67,9 @@ if __name__ == "__main__":
     
     random_smooths=['smooth_1.5', 'smooth_3', 'smooth_6', 'smooth_12', 'smooth_24']
     iterations = range(1000)
-    all_maps = [[0],[0,4,5], range(20)]
-    all_maps_str = ['0', 'best']
-    hemi = 'lh'  #['lh', 'rh']:
+    maps =  range(20)
+    maps_str = 'all'  # '0', 'best'
+    hemi = 'rh' #'lh'
     
     # load t1 file for dimensions and histogramm
     t1_left = np.load(t1_file%('lh'))
