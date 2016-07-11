@@ -9,13 +9,13 @@ import pickle
 mesh_file = '/scr/ilz3/myelinconnect/new_groupavg/surfs/lowres/%s_lowres_new.vtk'
 mask_file="/scr/ilz3/myelinconnect/new_groupavg/masks/%s_fullmask_new.npy"
 fullmask_file = '/scr/ilz3/myelinconnect/new_groupavg/masks/fullmask_lh_rh_new.npy'
-t1_file = '/scr/ilz3/myelinconnect/new_groupavg/t1/smooth_3/%s_t1_avg_smooth_3.npy'
+t1_file = '/scr/ilz3/myelinconnect/new_groupavg/t1/smooth_1.5/%s_t1_avg_smooth_1.5.npy'
 embed_dict_file="/scr/ilz3/myelinconnect/new_groupavg/embed/both_smooth_3_embed_dict.pkl"
-model_file = '/scr/ilz3/myelinconnect/new_groupavg/model/linear_combination/t1avg/%s_t1avg_by_fc_maps_%s.pkl'
+model_file = '/scr/ilz3/myelinconnect/new_groupavg/model/linear_combination/t1avg/smooth_1.5/%s_t1avg_by_fc_maps_%s.pkl'
 
 
-all_maps = [[0],range(10)]
-all_maps_str = ['0', '0_to_10']
+all_maps = [[0],[0,4,5], range(20)]
+all_maps_str = ['0', 'best', 'all']
 
 # load one file for each hemishpere once to get dimensions
 lv,_,_ = read_vtk(mesh_file%('lh'))

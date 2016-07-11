@@ -12,8 +12,8 @@ t1_file = '/scr/ilz3/myelinconnect/new_groupavg/t1/smooth_1.5/%s_t1_avg_smooth_1
 model_file = '/scr/ilz3/myelinconnect/new_groupavg/model/linear_combination/t1avg/smooth_1.5/both_t1avg_by_fc_maps_%s.pkl'
 
 
-all_maps = [[0,4], [0,5]] #[[0], [0,4,5], range(20)]
-all_maps_str = ['0_4', '0_5'] #['0', 'best', 'all']
+all_maps = [[4], [5]] #[[0], [0,4,5], range(20)]
+all_maps_str = ['4', '5'] #['0', 'best', 'all']
 
 #v,f,d = read_vtk(mesh_file%hemi)
 t1_left = np.load(t1_file%('lh'))
