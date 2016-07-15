@@ -4,7 +4,6 @@ import nipype.interfaces.utility as util
 import nipype.interfaces.io as nio
 import nipype.interfaces.fsl as fsl
 import nipype.interfaces.freesurfer as fs
-import nipype.interfaces.afni as afni
 import nipype.interfaces.nipy as nipy
 import nipype.algorithms.rapidart as ra
 from nipype.algorithms.misc import TSNR
@@ -192,16 +191,16 @@ preproc.connect([(structlist, struct2func, [('out', 'input_image')]),
 
 
 # calculate compcor regressors
-compcor = Node(util.Function(input_names=['realigned_file', 'mask_file',
-                                          'num_components',
-                                          'extra_regressors'],
-                                   output_names=['out_files'],
-                                   function=extract_noise_components),
-                     name='compcor')
-compcor.inputs.num_components = 5
-preproc.connect([(slicemoco, compcor, [('out_file', 'realigned_file')]),
-                 (struct2func, compcor, [(('output_image', selectindex, [1,2]),'mask_file')])
-                 ])
+#compcor = Node(util.Function(input_names=['realigned_file', 'mask_file',
+#                                          'num_components',
+#                                          'extra_regressors'],
+#                                   output_names=['out_files'],
+#                                   function=extract_noise_components),
+#                     name='compcor')
+#compcor.inputs.num_components = 5
+#preproc.connect([(slicemoco, compcor, [('out_file', 'realigned_file')]),
+#                 (struct2func, compcor, [(('output_image', selectindex, [1,2]),'mask_file')])
+#                 ])
   
 # perform artefact detection
 artefact=Node(ra.ArtifactDetect(save_plot=True,
@@ -221,12 +220,12 @@ preproc.connect([(slicemoco, artefact, [('out_file', 'realigned_files'),
   
   
 # calculate motion regressors
-motreg = MapNode(util.Function(input_names=['motion_params', 'order','derivatives'],
+motreg = Node(util.Function(input_names=['motion_params', 'order','derivatives'],
                             output_names=['out_files'],
                             function=motion_regressors),
-                 iterfield=['order'],
+                 #iterfield=['order'],
                  name='motion_regressors')
-motreg.inputs.order=[1,2]
+motreg.inputs.order=1#[1,2]
 motreg.inputs.derivatives=1
 preproc.connect([(slicemoco, motreg, [('par_file','motion_params')])])
   
@@ -264,7 +263,7 @@ preproc.connect([(session_infosource, sink, [('session', 'container')]),
                                   ('intensity_files', 'confounds.@intensity_files'),
                                   ('statistic_files', 'confounds.@outlier_stats'),
                                   ('plot_files', 'confounds.@outlier_plots')]),
-                 (compcor, sink, [('out_files', 'confounds.@compcor')]),
+                 #(compcor, sink, [('out_files', 'confounds.@compcor')]),
                  (motreg, sink, [('out_files', 'confounds.@motreg')])
                  ])
     
