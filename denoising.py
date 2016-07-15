@@ -67,7 +67,7 @@ for subject in subjects:
         csf_regressor=high_variance_confounds(moco_nii, mask_img=csf_nii, detrend=True)
         
         # extract high variance confounds from unprocessed data
-        highvar_regressor=high_variance_confounds(raw_file, detrend=True)
+        #highvar_regressor=high_variance_confounds(raw_file, detrend=True)
         
         # load compcor regressors
         #compcor_regressor=np.genfromtxt(compcor_file)
