@@ -2,7 +2,7 @@ from vtk_rw import read_vtk, write_vtk
 import numpy as np
 
 
-compartment = 'lower'
+compartment = 'upper'
 hemis = ['lh', 'rh']
 
 vtk_file = '/scr/ilz3/myelinconnect/new_groupavg/profiles/%s/%s/%s_lowres_new_avgsurf_groupdata.vtk'
@@ -28,5 +28,6 @@ for hemi in hemis:
     np.save(avg_npy_file%(compartment, hemi, compartment), avg_array)
     #write_vtk(avg_vtk_file%(compartment, hemi, compartment), v,f, data=avg_array)
 
-both = np.concatenate((both_hemis[0], both_hemis[1]))
-np.save(both_hemi_npy_file%compartment, both)
+#print 'ready'
+both = np.concatenate(both_hemis)
+np.save(both_hemi_npy_file%(compartment, compartment), both)
