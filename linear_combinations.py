@@ -6,14 +6,14 @@ import pickle
 import pandas as pd
 
 mesh_file = '/scr/ilz3/myelinconnect/new_groupavg/surfs/lowres/%s_lowres_new.vtk'
-mask_file="/scr/ilz3/myelinconnect/new_groupavg/masks/fullmask_lh_rh_new.npy"
-embed_dict_file="/scr/ilz3/myelinconnect/new_groupavg/embed/both_smooth_3_embed_dict.pkl"
+mask_file="/scr/ilz3/myelinconnect/new_groupavg/masks/fullmask_lh_rh_viz.npy" #new.npy"
+embed_dict_file="/scr/ilz3/myelinconnect/new_groupavg/embed/both_smooth_3_embed_dict_viz.pkl"
 t1_file = '/scr/ilz3/myelinconnect/new_groupavg/t1/smooth_1.5/%s_t1_avg_smooth_1.5.npy'
-model_file = '/scr/ilz3/myelinconnect/new_groupavg/model/linear_combination/t1avg/smooth_1.5/both_t1avg_by_fc_maps_%s.pkl'
+model_file = '/scr/ilz3/myelinconnect/new_groupavg/model/linear_combination/t1avg/smooth_1.5_viz/both_t1avg_by_fc_maps_%s.pkl'
 
 
-all_maps = [[4], [5]] #[[0], [0,4,5], range(20)]
-all_maps_str = ['4', '5'] #['0', 'best', 'all']
+all_maps = [[0], [0,4,5]]
+all_maps_str = ['0', 'best']
 
 #v,f,d = read_vtk(mesh_file%hemi)
 t1_left = np.load(t1_file%('lh'))
@@ -22,8 +22,9 @@ t1 = np.concatenate((t1_left, t1_right))
 
 mask = np.load(mask_file)
 # extend mask to nodes that have a t1avg < 1500
-bigmask = np.unique(np.concatenate((mask,np.where(t1<=1500)[0])))
-bigmask = np.asarray(bigmask, dtype='int64')
+#bigmask = np.unique(np.concatenate((mask,np.where(t1<=1500)[0])))
+#bigmask = np.asarray(bigmask, dtype='int64')
+bigmask = np.copy(mask)
 # define "nonmask" for both
 idcs=np.arange(0,t1.shape[0])
 nonmask=np.delete(idcs, mask)

@@ -4,7 +4,7 @@ import h5py
 from scipy.spatial.distance import pdist
 
 t1_file = '/scr/ilz3/myelinconnect/new_groupavg/t1/smooth_1.5/%s_t1_groupdata_smooth_1.5.npy'
-mat_file = corr_file = '/scr/ilz3/myelinconnect/new_groupavg/corr/both_smooth_avg_t1_dist.hdf5'
+mat_file = '/scr/ilz3/myelinconnect/new_groupavg/corr/both_t1_dist.hdf5'
 
 # load t1 data
 print 'load data'
@@ -28,6 +28,6 @@ dist_upper /= t1.shape[1]
 # save
 print 'saving matrix'
 f = h5py.File(mat_file, 'w')
-f.create_dataset('upper', data=dist_upper)
+f.create_dataset('upper', data=dist_upper, compression='gzip')
 f.create_dataset('shape', data=(size, size))
 f.close()

@@ -5,100 +5,95 @@ from scipy.spatial.distance import pdist
 import scipy.stats as stats
 from sklearn import linear_model
 
-mask_file="/scr/ilz3/myelinconnect/new_groupavg/masks/fullmask_lh_rh_new.npy"
 fc_file = '/scr/ilz3/myelinconnect/new_groupavg/corr/both_smooth_3_avg_corr.hdf5'
 t1_file = '/scr/ilz3/myelinconnect/new_groupavg/corr/both_t1_dist.hdf5'
 dist_file = '/scr/ilz3/myelinconnect/new_groupavg/corr/both_euclid_dist.hdf5'
 resid_file = '/scr/ilz3/myelinconnect/new_groupavg/corr/both_residual_t1_after_dist.hdf5'
-pure_corr_file = '/scr/ilz3/myelinconnect/new_groupavg/corr/fc_corr.npy'
-dist_corr_file = '/scr/ilz3/myelinconnect/new_groupavg/corr/dist_corr.npy'
-resid_corr_file = '/scr/ilz3/myelinconnect/new_groupavg/corr/resid_corr.npy'
 
-print 'load_mask'
-mask = np.load(mask_file)
+fc_corr_file = '/scr/ilz3/myelinconnect/new_groupavg/corr/fc_t1_corr.npy' #t1 vs fc
+dist_corr_file = '/scr/ilz3/myelinconnect/new_groupavg/corr/dist_t1_corr.npy' #t1 vs distance
+resid_corr_file = '/scr/ilz3/myelinconnect/new_groupavg/corr/fc_t1resid_corr.npy' #t1 after distance regression vs fc
+fc_dist_corr_file = '/scr/ilz3/myelinconnect/new_groupavg/corr/fc_dist_corr.npy' #fc vs distance
+t1_fcresid_corr_file = '/scr/ilz3/myelinconnect/new_groupavg/corr/t1_fcresid_corr.npy' #fc after distance regression vs t1
+double_resid_corr_file = '/scr/ilz3/myelinconnect/new_groupavg/corr/t1resid_fcresid_corr.npy' #fc after distance regression vs t1 after distance regression
+#fc_dist_fit_file = '/scr/ilz3/myelinconnect/new_groupavg/corr/fc_dist_fit.npy'
 
 
-print 'load t1'
-f = h5py.File(t1_file, 'r')
-t1 = np.asarray(f['upper'])
-full_shape = tuple(f['shape'])
-f.close()
+def load_full_mat(file, fill_value):
+    f = h5py.File(file, 'r')
+    upper = np.asarray(f['upper'])
+    full_shape = tuple(f['shape'])
+    f.close()
+    full = np.zeros(tuple(full_shape))
+    full[np.triu_indices_from(full, k=1)] = np.nan_to_num(upper)
+    del upper
+    full += full.T
+    np.fill_diagonal(full, fill_value)
+    return full, full_shape
 
-print 'full matrix t1'
-full_t1 = np.zeros(tuple(full_shape))
-full_t1[np.triu_indices_from(full_t1, k=1)] = np.nan_to_num(t1)
-del t1
-full_t1 += full_t1.T
-np.fill_diagonal(full_t1, 1)
-
-print 'mask t1'
-#full_t1 = np.delete(full_t1, mask, 0)
-#full_t1 = np.delete(full_t1, mask, 1)
 
 print 'load dist'
-f = h5py.File(dist_file, 'r')
-dist = np.asarray(f['upper'])
-f.close()
+dist, full_shape = load_full_mat(dist_file, 0)
 
-print 'full matrix dist'
-full_dist = np.zeros(tuple(full_shape))
-full_dist[np.triu_indices_from(full_dist, k=1)] = np.nan_to_num(dist)
-del dist
-full_dist += full_dist.T
-np.fill_diagonal(full_dist, 1)
+print 'load t1'
+t1, _ = load_full_mat(t1_file, 0)
 
-print 'mask dist'
-#full_dist = np.delete(full_dist, mask, 0)
-#full_dist = np.delete(full_dist, mask, 1)
-
-
-print 'node-wise dist regression'
-dist_corr = np.zeros((full_t1.shape[0],))
-dist_resid = np.zeros((full_t1.shape))
-
-
-for i in range(full_t1.shape[0]):
-    dist_corr[i] = stats.pearsonr(full_t1[i], full_dist[i])[0]
+print 'node-wise correlation and regression'
+#dist_corr = np.zeros((t1.shape[0],))
+dist_resid_t1 = np.zeros((t1.shape))
+for i in range(t1.shape[0]):
+#    dist_corr[i] = stats.pearsonr(t1[i], dist[i])[0]
+#    fc_dist_corr[i] = stats.pearsonr(fc[i], dist[i])[0]
+    X = np.vstack((np.ones(dist[i].shape[0]), dist[i])).T
+    model_dist = linear_model.LinearRegression()
+    model_dist.fit(X, t1[i])
+    dist_resid_t1[i] = t1[i] - model_dist.predict(X)
     
-    clf = linear_model.LinearRegression()
-    clf.fit(full_dist[i][:, np.newaxis], full_t1[i][:, np.newaxis])
-    dist_resid[i] = full_t1[i] - np.squeeze(clf.predict(full_dist[i][:,np.newaxis]))
-    
-del full_dist
+#    model_dist = linear_model.LinearRegression()
+#    model_dist.fit(dist[i][:, np.newaxis], fc[i][:, np.newaxis])
+#    dist_resid[i] = fc[i] - np.squeeze(model_dist.predict(dist[i][:,np.newaxis]))
 
-print 'saving dist corr'
-np.save(dist_corr_file, dist_corr)
-del dist_corr
-    
-#print 'saving residuals'
-#f = h5py.File(resid_file, 'w')
-#f.create_dataset('upper', data=dist_resid, chunks=(dist_resid.shape[0],), compression='gzip')
-#f.create_dataset('shape', data=full_shape)
-#f.close()
-
+del t1
 
 print 'load fc'
-f = h5py.File(fc_file, 'r')
-fc = np.asarray(f['upper'])
-f.close()
+fc, _ = load_full_mat(fc_file, 1)
 
-print 'full matrix fc'
-full_fc = np.zeros(tuple(full_shape))
-full_fc[np.triu_indices_from(full_fc, k=1)] = np.nan_to_num(fc)
+print 'node-wise correlation and regression'
+#dist_corr = np.zeros((t1.shape[0],))
+dist_resid_fc = np.zeros((fc.shape))
+for i in range(fc.shape[0]):
+#    dist_corr[i] = stats.pearsonr(t1[i], dist[i])[0]
+#    fc_dist_corr[i] = stats.pearsonr(fc[i], dist[i])[0]
+    X = np.vstack((np.ones(dist[i].shape[0]), dist[i])).T
+    model_dist = linear_model.LinearRegression()
+    model_dist.fit(X, fc[i])
+    dist_resid_fc[i] = fc[i] - model_dist.predict(X)
+
 del fc
-full_fc += full_fc.T
-np.fill_diagonal(full_fc, 1)
+del dist
 
-print 'mask fc'
-#full_fc = np.delete(full_fc, mask, 0)
-#full_fc = np.delete(full_fc, mask, 1)
-   
-   
-print 'corr fc with and without dist'
-fc_corr = np.zeros((full_fc.shape[0],))
-resid_corr = np.zeros((full_fc.shape[0],))
-
-for i in range(full_fc.shape[0]):
+double_resid_corr = np.zeros((dist_resid_fc.shape[0],))
+for i in range(dist_resid_fc.shape[0]):
+    double_resid_corr[i] = stats.pearsonr(dist_resid_fc[i], dist_resid_t1[i])[0]
     
-    fc_corr[i] = stats.pearsonr(full_t1[i], full_fc[i])[0]
-    resid_corr[i] = stats.pearsonr(dist_resid[i], full_fc[i])[0]
+np.save(double_resid_corr_file, double_resid_corr)
+
+#upper_dist_resid = dist_resid[np.triu_indices_from(dist_resid, k=1)]
+#del dist_resid 
+#print 'save dist_resid'
+#f = h5py.File(resid_file, 'w')
+#f.create_dataset('upper', data=upper_dist_resid)
+#f.create_dataset('shape', data=full_shape)
+#f.close()
+# print 'load resid'
+# dist_resid, _ = load_full_mat(resid_file, 0)
+
+
+#fc_corr = np.zeros((fc.shape[0],))
+#resid_corr = np.zeros((fc.shape[0],))
+#for i in range(fc.shape[0]):
+#    fc_corr[i] = stats.pearsonr(t1[i], fc[i])[0]
+    #resid_corr[i] = stats.pearsonr(dist_resid[i], fc[i])[0]
+
+#np.save(fc_corr_file, fc_corr)
+#np.save(resid_corr_file, resid_corr)
