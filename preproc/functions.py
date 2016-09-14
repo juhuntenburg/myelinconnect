@@ -1,9 +1,8 @@
-def selectindex(files, idx):
-    import numpy as np
-    from nipype.utils.filemanip import filename_to_list, list_to_filename
-    return list_to_filename(np.array(filename_to_list(files))[idx].tolist())
-
 def fix_hdr(data_file, header_file):
+    '''
+    Overwrites the header of data_file with the header of header_file
+    USE WITH CAUTION
+    '''
     
     import nibabel as nb
     import os
@@ -17,7 +16,81 @@ def fix_hdr(data_file, header_file):
     _, base, _ = split_filename(data_file)
     nb.save(new_file, base + "_fixed.nii.gz")
     return os.path.abspath(base + "_fixed.nii.gz")
+
+
+def nilearn_denoise(in_file, brain_mask, wm_mask, csf_mask,
+                      motreg_file, outlier_file,
+                      bandpass, tr ):
+    """Clean time series using Nilearn high_variance_confounds to extract 
+    CompCor regressors and NiftiMasker for regression of all nuissance regressors,
+    detrending, normalziation and bandpass filtering.
+    """
+    import numpy as np
+    import nibabel as nb
+    import os
+    from nilearn.image import high_variance_confounds
+    from nilearn.input_data import NiftiMasker
+    from nipype.utils.filemanip import split_filename
+
+    # reload niftis to round affines so that nilearn doesn't complain
+    wm_nii=nb.Nifti1Image(nb.load(wm_mask).get_data(), np.around(nb.load(wm_mask).get_affine(), 2), nb.load(wm_mask).get_header())
+    csf_nii=nb.Nifti1Image(nb.load(csf_mask).get_data(), np.around(nb.load(csf_mask).get_affine(), 2), nb.load(csf_mask).get_header())
+    time_nii=nb.Nifti1Image(nb.load(in_file).get_data(),np.around(nb.load(in_file).get_affine(), 2), nb.load(in_file).get_header())
+        
+    # infer shape of confound array
+    # not ideal
+    confound_len = nb.load(in_file).get_data().shape[3]
     
+    # create outlier regressors
+    outlier_regressor = np.empty((confound_len,1))
+    try:
+        outlier_val = np.genfromtxt(outlier_file)
+    except IOError:
+        outlier_val = np.empty((0))
+    for index in np.atleast_1d(outlier_val):
+        outlier_vector = np.zeros((confound_len, 1))
+        outlier_vector[index] = 1
+        outlier_regressor = np.hstack((outlier_regressor, outlier_vector))
+    
+    outlier_regressor = outlier_regressor[:,1::]
+        
+    # load motion regressors
+    motion_regressor=np.genfromtxt(motreg_file)
+    
+    # extract high variance confounds in wm/csf masks from motion corrected data
+    wm_regressor=high_variance_confounds(time_nii, mask_img=wm_nii, detrend=True)
+    csf_regressor=high_variance_confounds(time_nii, mask_img=csf_nii, detrend=True)
+    
+    # create Nifti Masker for denoising
+    denoiser=NiftiMasker(mask_img=brain_mask, standardize=True, detrend=True, high_pass=bandpass[1], low_pass=bandpass[0], t_r=tr)
+    
+    # denoise and return denoise data to img
+    confounds=np.hstack((outlier_regressor,wm_regressor, csf_regressor, motion_regressor))
+    denoised_data=denoiser.fit_transform(in_file, confounds=confounds)
+    denoised_img=denoiser.inverse_transform(denoised_data)
+        
+    # save  
+    _, base, _ = split_filename(in_file)
+    img_fname = base + '_denoised.nii.gz'
+    nb.save(denoised_img, img_fname)
+    
+    confound_fname = os.path.join(os.getcwd(), "all_confounds.txt")
+    np.savetxt(confound_fname, confounds, fmt="%.10f")
+    
+    return os.path.abspath(img_fname), confound_fname
+
+
+    
+'''
+======================================
+Functions copied from Nipype workflows
+======================================
+'''
+
+def selectindex(files, idx):
+    import numpy as np
+    from nipype.utils.filemanip import filename_to_list, list_to_filename
+    return list_to_filename(np.array(filename_to_list(files))[idx].tolist())
 
 def median(in_files):
     """Computes an average of the median of each realigned timeseries
@@ -50,8 +123,6 @@ def median(in_files):
     nb.save(median_img, base + "_median.nii.gz")
     return os.path.abspath(base + "_median.nii.gz")
     return filename
-
-
 
 def get_info(dicom_file):
     """Given a Siemens dicom file return metadata
@@ -114,52 +185,3 @@ def motion_regressors(motion_params, order=0, derivatives=1):
         np.savetxt(filename, out_params2, fmt="%.10f")
         out_files.append(filename)
     return out_files
-
-
-def extract_noise_components(realigned_file, mask_file, num_components=5,
-extra_regressors=None):
-    """Derive components most reflective of physiological noise
-    Parameters
-    ----------
-    realigned_file: a 4D Nifti file containing realigned volumes
-    mask_file: a 3D Nifti file containing white matter + ventricular masks
-    num_components: number of components to use for noise decomposition
-    extra_regressors: additional regressors to add
-    Returns
-    -------
-    components_file: a text file containing the noise components
-    """
-    
-    import nibabel as nb
-    import numpy as np
-    from nipype.utils.filemanip import filename_to_list
-    import scipy.linalg as linalg
-    import os
-    
-    imgseries = nb.load(realigned_file)
-    components = None
-    for filename in filename_to_list(mask_file):
-        mask = nb.load(filename).get_data()
-        if len(np.nonzero(mask > 0)[0]) == 0:
-            continue
-        voxel_timecourses = imgseries.get_data()[mask > 0]
-        voxel_timecourses[np.isnan(np.sum(voxel_timecourses, axis=1)), :] = 0
-        # remove mean and normalize by variance
-        # voxel_timecourses.shape == [nvoxels, time]
-        X = voxel_timecourses.T
-        stdX = np.std(X, axis=0)
-        stdX[stdX == 0] = 1.
-        stdX[np.isnan(stdX)] = 1.
-        stdX[np.isinf(stdX)] = 1.
-        X = (X - np.mean(X, axis=0))/stdX
-        u, _, _ = linalg.svd(X, full_matrices=False)
-        if components is None:
-            components = u[:, :num_components]
-        else:
-            components = np.hstack((components, u[:, :num_components]))
-    if extra_regressors:
-        regressors = np.genfromtxt(extra_regressors)
-        components = np.hstack((components, regressors))
-    components_file = os.path.join(os.getcwd(), 'compcor_regressor.txt')
-    np.savetxt(components_file, components, fmt="%.10f")
-    return components_file

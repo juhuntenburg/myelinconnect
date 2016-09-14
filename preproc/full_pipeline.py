@@ -8,21 +8,16 @@ import nipype.interfaces.nipy as nipy
 import nipype.algorithms.rapidart as ra
 from nipype.algorithms.misc import TSNR
 import nipype.interfaces.ants as ants
-import nilearn.image as nli
-from functions import strip_rois_func, get_info, median, motion_regressors, extract_noise_components, selectindex, fix_hdr
+from functions import strip_rois_func, get_info, median, motion_regressors, selectindex, fix_hdr
 from linear_coreg import create_coreg_pipeline
 from nonlinear_coreg import create_nonlinear_pipeline
 
 
 # read in subjects and file names
 df=pd.read_csv('/scr/ilz3/myelinconnect/subjects.csv', header=0)
-subjects_db=list(df['DB'])
-# subjects_trt=list(df['TRT'])
-# subjects=[]
-# for sub in range(len(subjects_db)):
-#     subjects.append(subjects_db[sub]+'_'+subjects_trt[sub])
-subjects=['KSYT', 'WSFT']
-# sessions to loop over
+subjects = pd.read_csv('/scr/ilz3/myelinconnect/subjects.csv')
+subjects=list(all_subjects['DB'])
+
 sessions=['rest1_1' ,'rest1_2', 'rest2_1', 'rest2_2']
 
 # directories
@@ -57,6 +52,7 @@ templates={'rest' : 'resting/raw/{subject}_{session}.nii.gz',
            'dicom':'resting/raw/example_dicoms/{subject}*/{session}/*',
            'uni_highres' : 'struct/uni/{subject}*UNI_Images_merged.nii.gz',
            't1_highres' : 'struct/t1/{subject}*T1_Images_merged.nii.gz',
+           # outputs from cbstools
            'brain_mask' : 'struct/mask/{subject}*mask.nii.gz',
            'segmentation' : 'struct/seg/{subject}*lbls_merged.nii.gz',
            'csfmask' : 'struct/csfmask/{subject}*T1_Images_merged_seg_merged_sub_csf.nii.gz'
@@ -94,7 +90,8 @@ preproc.connect([(getinfo, slicemoco, [('slice_times', 'slice_times'),
                                        ('TR', 'tr')]),
                  (remove_vol, slicemoco, [('out_file', 'in_file')])])
 
-# compute tsnr and detrend
+# compute tsnr and detrend 
+# (mostly for tsnr qa, detrending could actually be skipped at this stage)
 tsnr = Node(TSNR(regress_poly=2),
                name='tsnr')
 preproc.connect([(slicemoco, tsnr, [('out_file', 'in_file')])])
@@ -176,7 +173,7 @@ preproc.connect([(fixhdr, structlist, [('out_file', 'in1')]),
                  (csfmask, structlist, [('binary_file', 'in3')])
                  ])
    
-# project brain mask, wm/csf masks, t1 and subcortical mask in functional space
+# project brain, wm and csf masks  in functional space
 struct2func = MapNode(ants.ApplyTransforms(dimension=3,
                                          invert_transform_flags=[True, False],
                                          interpolation = 'NearestNeighbor'),
@@ -188,19 +185,6 @@ preproc.connect([(structlist, struct2func, [('out', 'input_image')]),
                  (translist_inv, struct2func, [('out', 'transforms')]),
                  (median, struct2func, [('median_file', 'reference_image')]),
                  ])
-
-
-# calculate compcor regressors
-#compcor = Node(util.Function(input_names=['realigned_file', 'mask_file',
-#                                          'num_components',
-#                                          'extra_regressors'],
-#                                   output_names=['out_files'],
-#                                   function=extract_noise_components),
-#                     name='compcor')
-#compcor.inputs.num_components = 5
-#preproc.connect([(slicemoco, compcor, [('out_file', 'realigned_file')]),
-#                 (struct2func, compcor, [(('output_image', selectindex, [1,2]),'mask_file')])
-#                 ])
   
 # perform artefact detection
 artefact=Node(ra.ArtifactDetect(save_plot=True,
@@ -223,12 +207,39 @@ preproc.connect([(slicemoco, artefact, [('out_file', 'realigned_files'),
 motreg = Node(util.Function(input_names=['motion_params', 'order','derivatives'],
                             output_names=['out_files'],
                             function=motion_regressors),
-                 #iterfield=['order'],
                  name='motion_regressors')
-motreg.inputs.order=1#[1,2]
+motreg.inputs.order=1
 motreg.inputs.derivatives=1
 preproc.connect([(slicemoco, motreg, [('par_file','motion_params')])])
-  
+
+# use Nilearn to calculate physiological nuissance regressors and clean 
+# time series using combined regressors
+denoise = Node(util.Function(input_names=['in_file', 
+                                          'brain_mask', 
+                                          'wm_mask',
+                                          'csf_mask',
+                                          'motreg_file', 
+                                          'outlier_file', 
+                                          'bandpass', 
+                                          'tr'],
+                             output_names=['denoised_file',
+                                           'confounds_file'],
+                             function=nilearn_denoise),
+               name='denoise')
+
+denoise.inputs.tr = 3.0
+denoise.inputs.bandpass = [0.1, 0.01]
+
+preproc.connect([(slicemoco, denoise, [('out_file', 'in_file')]),
+                 (struct2func, denoise, [(('output_image', selectindex, [0]), 'brain_mask'),
+                                         (('output_image', selectindex, [1]), 'wm_mask'),
+                                         (('output_image', selectindex, [2]), 'csf_mask')]),
+                 (motreg, denoise, [(('out_files',selectindex,[0]), 'motreg_file')]),
+                 (artefact, denoise, [('outlier_files', 'outlier_file')])
+                 ])
+
+
+# make base directory for sinking
 def makebase(subject, out_dir):
     return out_dir + subject
   
@@ -263,10 +274,12 @@ preproc.connect([(session_infosource, sink, [('session', 'container')]),
                                   ('intensity_files', 'confounds.@intensity_files'),
                                   ('statistic_files', 'confounds.@outlier_stats'),
                                   ('plot_files', 'confounds.@outlier_plots')]),
-                 #(compcor, sink, [('out_files', 'confounds.@compcor')]),
-                 (motreg, sink, [('out_files', 'confounds.@motreg')])
+                 (motreg, sink, [('out_files', 'confounds.@motreg')]),
+                 (denoise, sink, [('denoised_file', 'final.@final'), 
+                                  # in this case denoised data was saved at 
+                                  # myelinconnect/resting/final/ instead
+                                  ('confounds_file', 'confounds.@all')])
                  ])
-    
-#preproc.run(plugin='MultiProc', plugin_args={'n_procs' : 9})
 
+#preproc.run(plugin='MultiProc', plugin_args={'n_procs' : 9})
 preproc.write_graph(dotfilename='func_preproc.dot', graph2use='colored', format='pdf', simple_form=True)
