@@ -11,6 +11,11 @@ import gdist
 from joblib import Parallel, delayed
 
 
+'''
+Rerun best performing model of each parameter length with 5% varying noise
+priors.
+'''
+
 ## function to calculate BIC
 def BIC(params, residuals, data, sigma2_res):
     p = params.shape[0]
@@ -24,7 +29,7 @@ def fit_model(c):#, combinations, masked_t1=masked_t1, masked_embed=masked_embed
     
     print c
     maps=combinations[c]
-    model_file = '/scr/ilz3/myelinconnect/new_groupavg/model/linear_combination/t1avg/smooth_1.5/model_comparison/model_%s.pkl'%str(c)
+    model_file = '/scr/ilz3/myelinconnect/new_groupavg/model/linear_combination/t1avg/smooth_1.5/varying_noise/model_%s.pkl'%str(c)
     clf = linear_model.LinearRegression()
     clf.fit(masked_embed[:,maps], masked_t1)
 
@@ -36,6 +41,8 @@ def fit_model(c):#, combinations, masked_t1=masked_t1, masked_embed=masked_embed
     model_dict["corr"] = stats.pearsonr(modelled_fit, masked_t1)[0]
     model_dict["rsquared"] = clf.score(masked_embed[:,maps], masked_t1)
     model_dict["bic"] = BIC(clf.coef_, residuals, masked_t1, sigma2_res)
+    model_dict["bic_minus5"] = BIC(clf.coef_, residuals, masked_t1, (sigma2_res-(sigma2_res/20)))
+    model_dict["bic_plus5"] = BIC(clf.coef_, residuals, masked_t1, (sigma2_res+(sigma2_res/20)))
     model_dict["res"] = (1./residuals.shape[0]) * np.sum(residuals**2)
     
     pkl_out = open(model_file, 'wb')
@@ -50,8 +57,8 @@ if __name__ == "__main__":
     
     ### load data
     print 'loading'
-    rh_mesh_file='/scr/ilz3/myelinconnect/new_groupavg/surfs/lowres/inflated/rh_lowres_new_infl50.vtk'
-    lh_mesh_file='/scr/ilz3/myelinconnect/new_groupavg/surfs/lowres/inflated/lh_lowres_new_infl50.vtk'
+    rh_mesh_file='/scr/ilz3/myelinconnect/new_groupavg/surfs/lowres/rh_lowres_new.vtk'
+    lh_mesh_file='/scr/ilz3/myelinconnect/new_groupavg/surfs/lowres/lh_lowres_new.vtk'
     full_mask_file='/scr/ilz3/myelinconnect/new_groupavg/masks/fullmask_lh_rh_new.npy'
     rh_t1_file='/scr/ilz3/myelinconnect/new_groupavg/t1/smooth_1.5/rh_t1_avg_smooth_1.5.npy'
     lh_t1_file='/scr/ilz3/myelinconnect/new_groupavg/t1/smooth_1.5/lh_t1_avg_smooth_1.5.npy'
@@ -94,10 +101,6 @@ if __name__ == "__main__":
     Gl = graph_from_mesh(lv, lf)
     Gr = graph_from_mesh(rv, rf)
     
-    #sigma = 0.5*median_vertex(median_neighbor(abs(val(vertex)-val(neighbor))))/0.67448975
-    # the 0.5 is because the stdev of X-Y is 2x the stdev of X, Y; 
-    # the 0.67448975 because the median of a half gaussian distribution is sigma x sqrt(2) x erf-1(1/2) = sigma x 0.67448975
-    
     left_medians= []
     for li in range(lv.shape[0]):
         neigh = Gl.neighbors(li)
@@ -119,19 +122,28 @@ if __name__ == "__main__":
     noise_median = 0.5*np.nanmedian(masked_medians)/0.67448975
     sigma2_res = noise_median**2
     
+    combinations = [[0], 
+            [0,5],
+            [0,4,5],  
+            [0,4,5,6], 
+            [0,4,5,6,9], 
+            [0,1,4,5,6,9],
+            [0,1,4,5,6,8,9], 
+            [0,1,4,5,6,8,9,15], 
+            [0,1,4,5,6,8,9,15,17],
+            [0,1,4,5,6,8,9,14,15,17], 
+            [0,1,4,5,6,7,8,9,14,15,17],
+            [0,1,4,5,6,7,8,9,10,14,15,17],
+            [0,1,4,5,6,7,8,9,10,12,14,15,17], 
+            [0,1,4,5,6,7,8,9,10,12,13,14,15,17],
+            [0,1,4,5,6,7,8,9,10,11,12,13,14,15,17],
+            [0,1,4,5,6,7,8,9,10,11,12,13,14,15,17,19],
+            [0,1,2,4,5,6,7,8,9,10,11,12,13,14,15,17,19],
+            [0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,17,19],
+            [0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,19],
+            [0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19],
+             ]
     
-    # list all possible combinations of maps
-    maps = range(20)
-    combinations = []
-    for i in range(len(maps)):
-        element = [list(x) for x in itertools.combinations(maps, i+1)]
-        combinations.extend(element)
-    
-    # data frame to save results for all models
-    #df = pd.DataFrame(columns=["Maps", "Pearson's r", "R squared", "BIC", "Residual SD"], 
-                      #index=range(len(combinations)))
 
-    Parallel(n_jobs=30)(delayed(fit_model)(i)
+    Parallel(n_jobs=20)(delayed(fit_model)(i)
                         for i in range(len(combinations)))
-    
-    #df.to_csv('/scr/ilz3/myelinconnect/new_groupavg/model/linear_combination/t1avg/model_comparison_20maps.csv')

@@ -10,6 +10,10 @@ from graphs import graph_from_mesh
 import gdist
 from joblib import Parallel, delayed
 
+'''
+Fit all possible combinations of the first 20 FC components to T1 and assess
+model fit using BIC.
+'''
 
 ## function to calculate BIC
 def BIC(params, residuals, data, sigma2_res):
@@ -20,11 +24,11 @@ def BIC(params, residuals, data, sigma2_res):
     return bic
 
 
-def fit_model(c):#, combinations, masked_t1=masked_t1, masked_embed=masked_embed):
+def fit_model(c):
     
     print c
     maps=combinations[c]
-    model_file = '/scr/ilz3/myelinconnect/new_groupavg/model/linear_combination/t1avg/smooth_1.5/varying_noise/model_%s.pkl'%str(c)
+    model_file = model_file_template%str(c)
     clf = linear_model.LinearRegression()
     clf.fit(masked_embed[:,maps], masked_t1)
 
@@ -36,8 +40,6 @@ def fit_model(c):#, combinations, masked_t1=masked_t1, masked_embed=masked_embed
     model_dict["corr"] = stats.pearsonr(modelled_fit, masked_t1)[0]
     model_dict["rsquared"] = clf.score(masked_embed[:,maps], masked_t1)
     model_dict["bic"] = BIC(clf.coef_, residuals, masked_t1, sigma2_res)
-    model_dict["bic_minus5"] = BIC(clf.coef_, residuals, masked_t1, (sigma2_res-(sigma2_res/20)))
-    model_dict["bic_plus5"] = BIC(clf.coef_, residuals, masked_t1, (sigma2_res+(sigma2_res/20)))
     model_dict["res"] = (1./residuals.shape[0]) * np.sum(residuals**2)
     
     pkl_out = open(model_file, 'wb')
@@ -45,7 +47,6 @@ def fit_model(c):#, combinations, masked_t1=masked_t1, masked_embed=masked_embed
     pkl_out.close()     
 
     return
-
 
 
 if __name__ == "__main__":
@@ -59,6 +60,7 @@ if __name__ == "__main__":
     lh_t1_file='/scr/ilz3/myelinconnect/new_groupavg/t1/smooth_1.5/lh_t1_avg_smooth_1.5.npy'
     embed_file='/scr/ilz3/myelinconnect/new_groupavg/embed/both_smooth_3_embed.npy'
     embed_dict_file='/scr/ilz3/myelinconnect/new_groupavg/embed/both_smooth_3_embed_dict.pkl'
+    model_file_template = '/scr/ilz3/myelinconnect/new_groupavg/model/linear_combination/t1avg/smooth_1.5/model_comparison/model_%s.pkl'
     
     lv,lf,_ = read_vtk(lh_mesh_file)
     lh_t1 = np.load(lh_t1_file)
@@ -96,10 +98,6 @@ if __name__ == "__main__":
     Gl = graph_from_mesh(lv, lf)
     Gr = graph_from_mesh(rv, rf)
     
-    #sigma = 0.5*median_vertex(median_neighbor(abs(val(vertex)-val(neighbor))))/0.67448975
-    # the 0.5 is because the stdev of X-Y is 2x the stdev of X, Y; 
-    # the 0.67448975 because the median of a half gaussian distribution is sigma x sqrt(2) x erf-1(1/2) = sigma x 0.67448975
-    
     left_medians= []
     for li in range(lv.shape[0]):
         neigh = Gl.neighbors(li)
@@ -121,28 +119,13 @@ if __name__ == "__main__":
     noise_median = 0.5*np.nanmedian(masked_medians)/0.67448975
     sigma2_res = noise_median**2
     
-    combinations = [[0], 
-            [0,5],
-            [0,4,5],  
-            [0,4,5,6], 
-            [0,4,5,6,9], 
-            [0,1,4,5,6,9],
-            [0,1,4,5,6,8,9], 
-            [0,1,4,5,6,8,9,15], 
-            [0,1,4,5,6,8,9,15,17],
-            [0,1,4,5,6,8,9,14,15,17], 
-            [0,1,4,5,6,7,8,9,14,15,17],
-            [0,1,4,5,6,7,8,9,10,14,15,17],
-            [0,1,4,5,6,7,8,9,10,12,14,15,17], 
-            [0,1,4,5,6,7,8,9,10,12,13,14,15,17],
-            [0,1,4,5,6,7,8,9,10,11,12,13,14,15,17],
-            [0,1,4,5,6,7,8,9,10,11,12,13,14,15,17,19],
-            [0,1,2,4,5,6,7,8,9,10,11,12,13,14,15,17,19],
-            [0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,17,19],
-            [0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,19],
-            [0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19],
-             ]
-    
+    # list all possible combinations of maps
+    maps = range(20)
+    combinations = []
+    for i in range(len(maps)):
+        element = [list(x) for x in itertools.combinations(maps, i+1)]
+        combinations.extend(element)
 
-    Parallel(n_jobs=20)(delayed(fit_model)(i)
+
+    Parallel(n_jobs=30)(delayed(fit_model)(i)
                         for i in range(len(combinations)))

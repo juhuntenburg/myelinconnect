@@ -10,6 +10,11 @@ from graphs import graph_from_mesh
 import gdist
 from joblib import Parallel, delayed
 
+'''
+Make summary csv of model performance under variyng noise priors.
+'''
+
+
 def load_pickle(pkl_file):
     pkl_in = open(pkl_file, 'r')
     pkl_dict = pickle.load(pkl_in)
