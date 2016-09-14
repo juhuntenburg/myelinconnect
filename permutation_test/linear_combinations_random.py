@@ -7,6 +7,10 @@ from histogram_matching import hist_match
 from utils import tupler
 from joblib import Parallel, delayed
 
+'''
+Try to fit random data with linear combinations of embedding components.
+Perform histogram matching of random data to original T1 data first.
+'''
 
 def fit_iteration((smooth, iteration)):
     
@@ -18,11 +22,6 @@ def fit_iteration((smooth, iteration)):
     
     # histogramm matching to original t1
     masked_t1 = hist_match(masked_t1, masked_orig)
-
-    #for m in range(len(all_maps)):
-    #maps = all_maps[m]
-    #maps_str = all_maps_str[m]
-    #print maps
     
     clf = linear_model.LinearRegression()
     clf.fit(masked_embed[:,maps], masked_t1)
@@ -68,7 +67,7 @@ if __name__ == "__main__":
     random_smooths=['smooth_1.5', 'smooth_3', 'smooth_6', 'smooth_12', 'smooth_24']
     iterations = range(1000)
     maps =  range(20)
-    maps_str = 'all'  # '0', 'best'
+    maps_str = '0' #, 'best'
     hemi = 'rh' #'lh'
     
     # load t1 file for dimensions and histogramm

@@ -4,7 +4,10 @@ from sklearn import linear_model
 import scipy.stats as stats
 import pickle
 
-
+'''
+Rerun the fitting of T1 with linear combinations of embedding components 
+(FC1 and FC1,5,6) for each hemisphere separately for comparison to random data.
+'''
 
 mesh_file = '/scr/ilz3/myelinconnect/new_groupavg/surfs/lowres/%s_lowres_new.vtk'
 mask_file="/scr/ilz3/myelinconnect/new_groupavg/masks/%s_fullmask_new.npy"
@@ -14,8 +17,8 @@ embed_dict_file="/scr/ilz3/myelinconnect/new_groupavg/embed/both_smooth_3_embed_
 model_file = '/scr/ilz3/myelinconnect/new_groupavg/model/linear_combination/t1avg/smooth_1.5/%s_t1avg_by_fc_maps_%s.pkl'
 
 
-all_maps = [[0],[0,4,5], range(20)]
-all_maps_str = ['0', 'best', 'all']
+all_maps = [[0],[0,4,5]]
+all_maps_str = ['0', 'best']
 
 # load one file for each hemishpere once to get dimensions
 lv,_,_ = read_vtk(mesh_file%('lh'))
