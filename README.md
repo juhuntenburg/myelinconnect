@@ -1,7 +1,7 @@
 ## A systematic relationship between functional connectivity and intracortical myelin in human cerebral cortex
 #### Code associated with the manuscript
 
-Python environment (anaconda) is laid out in:
+Python environment (anaconda):
 * myelinconnect_env.yml
 * myelinconnect_env.txt
 
