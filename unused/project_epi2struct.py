@@ -30,14 +30,6 @@ final_dir = '/scr/ilz3/myelinconnect/final_struct_space/'
 # set fsl output type to nii.gz
 fsl.FSLCommand.set_default_output_type('NIFTI_GZ')
 
-# volumes to remove from each timeseries
-vol_to_remove = 5
-
-# bandpass filter cutoffs in HZ, and TR to calculate sigma
-#TR=3.0
-#highpass=0.01
-#lowpass=0.1
-
 # main workflow
 epi2struct = Workflow(name='epi2struct')
 epi2struct.base_dir = working_dir

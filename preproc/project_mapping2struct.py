@@ -6,6 +6,17 @@ import nipype.interfaces.fsl as fsl
 import nipype.interfaces.ants as ants
 from nipype.utils.filemanip import split_filename
 
+'''
+Project mappings of resting state median images into highres structural space
+and splits them into separate x,y,z coordinate images.
+These coordinates can then be sampled in the structural space on the group 
+average surface (using the mmsr mapping of the respective subject) and finally
+each node can be "translated" into a time series using the coordinates that
+were sampled on it. 
+(Projecting the full resting state time series in highres space blows the 
+possible sizes of java arrays)
+'''
+
 
 # read in subjects and file names
 subjects = pd.read_csv('/scr/ilz3/myelinconnect/subjects.csv')

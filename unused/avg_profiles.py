@@ -48,7 +48,7 @@ for hemi in hemis:
         #    mean_3_7= np.mean(profiles[:,layer_low:layer_high], axis=1)
         #    np.save(mean_pro_file%(sub, hemi), mean_3_7)
         
-        #avg_pro += profiles
+        avg_pro += profiles
         #avg_coeff += coeffs
         #avg_mean += mean_3_7
         avg_r1 += r_profiles
@@ -56,11 +56,11 @@ for hemi in hemis:
         
         print 'Finished '+sub
         
-    #avg_pro = avg_pro / count
+    avg_pro = avg_pro / count
     #avg_coeff = avg_coeff / count
     #avg_mean = avg_mean / count
     avg_r1 = avg_r1 / count
-    #np.save(avg_pro_file%(hemi), avg_pro)
+    np.save(avg_pro_file%(hemi), avg_pro)
     #np.save(avg_coeff_file%(hemi), avg_coeff)
     #np.save(avg_mean_pro_file%(hemi), avg_mean)
     np.save(avg_r1_file%(hemi), avg_r1)

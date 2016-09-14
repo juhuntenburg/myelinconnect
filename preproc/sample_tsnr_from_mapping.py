@@ -5,6 +5,10 @@ import nibabel as nb
 import pandas as pd
 import os
 
+'''
+See project_mapping2struct.py for explanation
+(here tsnr is sampled instead of the time series)
+'''
 
 subjects = pd.read_csv('/scr/ilz3/myelinconnect/subjects.csv')
 subjects=list(subjects['DB'])
