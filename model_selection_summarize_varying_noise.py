@@ -17,27 +17,30 @@ def load_pickle(pkl_file):
     return pkl_dict
 
 
-models = range(1048575)
+models = range(20)
 
-model_file = '/scr/ilz3/myelinconnect/new_groupavg/model/linear_combination/t1avg/smooth_1.5/model_comparison/model_%s.pkl'
+model_file = '/scr/ilz3/myelinconnect/new_groupavg/model/linear_combination/t1avg/smooth_1.5/varying_noise/model_%s.pkl'
 df = pd.DataFrame(columns=["maps", 
                            "Pearson's r", 
                            "R squared", 
                            "BIC", 
+                           "BICminus5",
+                           "BICplus5",
                            "Residual SD"], 
                   index=models)
 
 for m in models: 
     print m
-    
     model_dict = load_pickle(model_file%str(m))
     df["maps"][m] = model_dict["maps"] 
     df["Pearson's r"][m] = model_dict["corr"] 
     df["R squared"][m] = model_dict["rsquared"] 
-    df["BIC"][m] = model_dict["bic"] 
+    df["BIC"][m] = model_dict["bic"] #
+    df["BICminus5"][m] = model_dict["bic_minus5"] 
+    df["BICplus5"][m] = model_dict["bic_plus5"] 
     df["Residual SD"][m] = model_dict["res"] 
     
-df.to_csv('/scr/ilz3/myelinconnect/new_groupavg/model/linear_combination/t1avg/smooth_1.5/model_comparison_20maps.csv')
+df.to_csv('/scr/ilz3/myelinconnect/new_groupavg/model/linear_combination/t1avg/smooth_1.5/varying_noise.csv')
 
 
 

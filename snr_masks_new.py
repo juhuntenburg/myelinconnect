@@ -34,7 +34,6 @@ for hemi in hemis:
               
             tsnr_d = np.load(tsnr_file%(subjects[sub], hemi, sess))
                   
-            # average across highres vertices that map to the same lowres vertex
             tsnr[:,tsnr_count] = tsnr_d
                           
             tsnr_count += 1
@@ -43,5 +42,5 @@ for hemi in hemis:
     #save the minimum snr across all subjects and sessions
     np.save(tsnr_full_file%(hemi), tsnr)
     np.save(tsnr_min_file%(hemi), np.min(tsnr, axis=1))
-    np.save(inv2prob_full_file%(hemi), inv2prob)
+    np.save(inv2prob_full_file%(hemi), inv2prob) 
     np.save(inv2prob_min_file%(hemi), np.min(inv2prob, axis=1))
