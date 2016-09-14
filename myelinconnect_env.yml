@@ -78,6 +78,7 @@ dependencies:
   - backports-abc==0.4
   - backports.ssl-match-hostname==3.4.0.2
   - bintrees==2.0.4
+  - cmocean==1.1
   - cython==0.23.4
   - gdist==1.0.3
   - ipython-genutils==0.1.0
