@@ -36,12 +36,3 @@ def create_reconall_pipeline(name='reconall'):
     
     
     return reconall
-
-
-# subject= raw_input('subject: ')
-# reconall=create_reconall_pipeline()
-# reconall.inputs.inputnode.anat='/scr/ilz2/7tresting/'+subject+'/preprocessed/mp2rage/uni_masked.nii.gz'
-# reconall.inputs.inputnode.fs_subjects_dir='/scr/ilz2/7tresting/freesurfer/'
-# reconall.inputs.inputnode.fs_subject_id=subject
-# 
-# reconall.run(plugin='MultiProc')

@@ -74,7 +74,7 @@ def create_coreg_pipeline(name='coreg'):
                    ])
     
 
-    # linear register highres highres mp2rage to lowres mp2rage
+    # linear register highres mp2rage to lowres mp2rage
     bbregister_anat = Node(fs.BBRegister(contrast_type='t1',
                                     out_fsl_file='highres2lowres.mat',
                                     out_reg_file='highres2lowres.dat',
