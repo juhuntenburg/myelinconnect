@@ -1,0 +1,22 @@
+# convert levelset 2 mesh with cbstools layout (use avg suface, i.e. mid cortex)
+
+# open vtk in paraview and save as ply in ascii format (possibly write script for this)
+
+# open ply in meshlab and simplify surface:
+
+# make new layer (duplicate)
+# filters - remeshing, decimation, simplification - quadric edge collapse decimation
+
+	# percent reduction 0.111 (1/9)
+	# quality threshold 1
+	# preserve mesh boundaries
+	# preserve topology
+	# preserve normals
+	# optimal position
+	# post-simplification clean
+
+# commandline
+meshlabserver -i rh_avg_orig.ply -o rh_avg_simple.ply -s simple.mlx -d simple.filter -l simple.log
+
+
+
