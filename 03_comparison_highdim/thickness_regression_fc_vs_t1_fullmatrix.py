@@ -108,9 +108,6 @@ del fc
 Correlation after regression
 ----------------------------
 '''
-print 'Pearson r t1resd vs fcresid', stats.pearsonr(fcresid, t1resid)[0]
-#Pearson r t1resd vs fcresid -0.213054129955
-
 
 print 'Pearson r t1resd vs fc', stats.pearsonr(fc, t1resid)[0]
 #-0.204399508508
@@ -118,8 +115,6 @@ print 'Pearson r t1resd vs fc', stats.pearsonr(fc, t1resid)[0]
 print 'Pearson r thicknessresd vs fc', stats.pearsonr(fc, thickresid)
 #(-0.06076323587345929, 0.0)
 
-#stats.pearsonr(fcresid, thickresid)
-#Out[85]: (0.14808519276506554, 0.0)
 
 
 
